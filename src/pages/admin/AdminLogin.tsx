@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { shop } from '../../config'
 import { isSupabaseMode, signIn } from '../../lib/store'
+import { projectRef } from '../../lib/supabase'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -53,6 +54,9 @@ export default function AdminLogin() {
           {busy ? 'Unlocking…' : 'Unlock'}
         </button>
       </form>
+      <p className="mt-6 text-center text-[11px] text-night-700/50 dark:text-cream-300/50">
+        {isSupabaseMode ? `Supabase project: ${projectRef}` : 'Local demo mode — no backend connected'}
+      </p>
     </main>
   )
 }

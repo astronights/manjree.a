@@ -11,6 +11,9 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import postgres from 'postgres'
+import { loadDotEnv } from './env.mjs'
+
+loadDotEnv()
 
 const dbUrl = process.env.SUPABASE_DB_URL
 if (!dbUrl) {

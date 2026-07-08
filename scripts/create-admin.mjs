@@ -7,6 +7,9 @@
 // admin@manjrees.local — never receives mail). Requires VITE_SUPABASE_URL and
 // SUPABASE_SERVICE_ROLE_KEY in .env. Run again with a new passcode to rotate.
 import { createClient } from '@supabase/supabase-js'
+import { loadDotEnv } from './env.mjs'
+
+loadDotEnv()
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

@@ -6,7 +6,9 @@
 // Supabase Auth password of a fixed account (VITE_ADMIN_EMAIL, defaulting to
 // admin@manjrees.local — never receives mail). Requires VITE_SUPABASE_URL and
 // SUPABASE_SERVICE_ROLE_KEY in .env. Run again with a new passcode to rotate.
-import { createClient } from '@supabase/supabase-js'
+//
+// Talks to the Supabase Auth admin REST API directly with fetch, so it runs
+// on any Node >= 18 (supabase-js requires Node 22+ for its WebSocket dep).
 import { explainMissing, loadDotEnv } from './env.mjs'
 
 const envInfo = loadDotEnv()
@@ -25,31 +27,42 @@ if (!passcode || passcode.length < 6) {
   process.exit(1)
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
+const base = `${url.replace(/\/+$/, '')}/auth/v1/admin`
+const headers = {
+  apikey: serviceKey,
+  Authorization: `Bearer ${serviceKey}`,
+  'Content-Type': 'application/json',
+}
 
-const { data: created, error } = await admin.auth.admin.createUser({
-  email,
-  password: passcode,
-  email_confirm: true,
-})
+async function api(method, path, body) {
+  const res = await fetch(`${base}${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  const json = await res.json().catch(() => ({}))
+  return { ok: res.ok, status: res.status, json }
+}
 
-if (!error) {
-  console.log(`Admin account ${created.user.email} created. Sign in at /admin with the passcode.`)
+const authError = (json) => json.msg || json.message || json.error_description || json.error || 'unknown error'
+
+const created = await api('POST', '/users', { email, password: passcode, email_confirm: true })
+if (created.ok) {
+  console.log(`Admin account ${email} created. Sign in at /admin with the passcode.`)
   process.exit(0)
 }
 
 // Already exists → treat as a passcode rotation.
-const { data: list, error: listError } = await admin.auth.admin.listUsers()
-const existing = list?.users.find((u) => u.email === email)
-if (listError || !existing) {
-  console.error(`Could not create admin: ${error.message}`)
+const list = await api('GET', '/users?page=1&per_page=1000')
+const existing = list.ok ? (list.json.users ?? []).find((u) => u.email === email) : undefined
+if (!existing) {
+  console.error(`Could not create admin (HTTP ${created.status}): ${authError(created.json)}`)
   process.exit(1)
 }
-const { error: updateError } = await admin.auth.admin.updateUserById(existing.id, { password: passcode })
-if (updateError) {
-  console.error(`Could not update passcode: ${updateError.message}`)
+
+const updated = await api('PUT', `/users/${existing.id}`, { password: passcode })
+if (!updated.ok) {
+  console.error(`Could not update passcode (HTTP ${updated.status}): ${authError(updated.json)}`)
   process.exit(1)
 }
 console.log(`Passcode updated for ${email}. Sign in at /admin with the new passcode.`)

@@ -157,7 +157,11 @@ export async function signIn({ passcode }: { passcode: string }): Promise<void> 
       email: shop.adminEmail,
       password: passcode,
     })
-    if (error) throw new Error('Incorrect passcode')
+    // Only credential failures become "Incorrect passcode"; anything else
+    // (rate limiting, config issues) surfaces as-is so it can be diagnosed.
+    if (error) {
+      throw new Error(error.message === 'Invalid login credentials' ? 'Incorrect passcode' : error.message)
+    }
     return
   }
   const expected = import.meta.env.VITE_DEMO_ADMIN_PIN || '1234'

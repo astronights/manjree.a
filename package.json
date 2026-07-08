@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "icons": "node scripts/generate-icons.mjs",
     "db:migrate": "node scripts/migrate.mjs",
-    "admin:create": "node scripts/create-admin.mjs"
+    "admin:create": "node scripts/create-admin.mjs",
+    "admin:verify": "node scripts/verify-passcode.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

@@ -11,16 +11,16 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import postgres from 'postgres'
-import { loadDotEnv } from './env.mjs'
+import { explainMissing, loadDotEnv } from './env.mjs'
 
-loadDotEnv()
+const envInfo = loadDotEnv()
 
 const dbUrl = process.env.SUPABASE_DB_URL
 if (!dbUrl) {
+  console.error(explainMissing('SUPABASE_DB_URL', envInfo))
   console.error(
-    'SUPABASE_DB_URL is not set.\n' +
-      'Copy the "Session pooler" connection string from the Supabase dashboard\n' +
-      '(Connect → URI) into .env, e.g.\n' +
+    '\nThe value is the "Session pooler" connection string from the Supabase\n' +
+      'dashboard (Connect → URI), e.g.\n' +
       '  SUPABASE_DB_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres',
   )
   process.exit(1)

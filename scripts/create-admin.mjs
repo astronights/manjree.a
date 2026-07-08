@@ -7,9 +7,9 @@
 // admin@manjrees.local — never receives mail). Requires VITE_SUPABASE_URL and
 // SUPABASE_SERVICE_ROLE_KEY in .env. Run again with a new passcode to rotate.
 import { createClient } from '@supabase/supabase-js'
-import { loadDotEnv } from './env.mjs'
+import { explainMissing, loadDotEnv } from './env.mjs'
 
-loadDotEnv()
+const envInfo = loadDotEnv()
 
 const url = process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -17,7 +17,7 @@ const email = process.env.VITE_ADMIN_EMAIL || 'admin@manjrees.local'
 const passcode = process.argv[2]
 
 if (!url || !serviceKey) {
-  console.error('VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env')
+  console.error(explainMissing(!url ? 'VITE_SUPABASE_URL' : 'SUPABASE_SERVICE_ROLE_KEY', envInfo))
   process.exit(1)
 }
 if (!passcode || passcode.length < 6) {

@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { categories } from '../config.js'
-import { listProducts, isNew } from '../lib/store.js'
-import ProductCard from '../components/ProductCard.jsx'
+import { categories } from '../config'
+import { listProducts, isNew } from '../lib/store'
+import ProductCard from '../components/ProductCard'
+import type { Product } from '../types'
 
 export default function Home() {
-  const [products, setProducts] = useState(null)
-  const [error, setError] = useState(null)
+  const [products, setProducts] = useState<Product[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [category, setCategory] = useState('All')
 
   useEffect(() => {
-    listProducts().then(setProducts).catch((e) => setError(e.message))
+    listProducts()
+      .then(setProducts)
+      .catch((e: Error) => setError(e.message))
   }, [])
 
   const newArrivals = useMemo(() => (products ?? []).filter(isNew), [products])

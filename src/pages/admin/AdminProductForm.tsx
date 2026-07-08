@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { categories, sizes as allSizes } from '../../config.js'
-import { getProduct, newUntilFromNow, saveProduct, uploadImages } from '../../lib/store.js'
+import { categories, sizes as allSizes } from '../../config'
+import { getProduct, newUntilFromNow, saveProduct, uploadImages } from '../../lib/store'
+import type { Product } from '../../types'
 
-const blank = {
+// While editing, price is the raw input string; converted on save.
+type ProductForm = Omit<Product, 'id' | 'created_at' | 'price'> & {
+  id?: string
+  created_at?: string
+  price: number | string
+}
+
+const blank: ProductForm = {
   title: '',
   description: '',
   price: '',
@@ -20,9 +28,9 @@ const blank = {
 export default function AdminProductForm() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [form, setForm] = useState(id ? null : blank)
+  const [form, setForm] = useState<ProductForm | null>(id ? null : blank)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (id) getProduct(id).then(setForm)
@@ -32,9 +40,9 @@ export default function AdminProductForm() {
     return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
   }
 
-  const set = (patch) => setForm((f) => ({ ...f, ...patch }))
+  const set = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f!, ...patch }))
 
-  const addPhotos = async (e) => {
+  const addPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files?.length) return
     setBusy(true)
@@ -43,16 +51,16 @@ export default function AdminProductForm() {
       const urls = await uploadImages(files)
       set({ images: [...form.images, ...urls] })
     } catch (err) {
-      setError(`Photo upload failed: ${err.message}`)
+      setError(`Photo upload failed: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setBusy(false)
       e.target.value = ''
     }
   }
 
-  const removePhoto = (i) => set({ images: form.images.filter((_, j) => j !== i) })
+  const removePhoto = (i: number) => set({ images: form.images.filter((_, j) => j !== i) })
 
-  const movePhoto = (i, dir) => {
+  const movePhoto = (i: number, dir: -1 | 1) => {
     const imgs = [...form.images]
     const j = i + dir
     if (j < 0 || j >= imgs.length) return
@@ -60,10 +68,10 @@ export default function AdminProductForm() {
     set({ images: imgs })
   }
 
-  const toggleSize = (s) =>
+  const toggleSize = (s: string) =>
     set({ sizes: form.sizes.includes(s) ? form.sizes.filter((x) => x !== s) : [...form.sizes, s] })
 
-  const save = async (asDraft) => {
+  const save = async (asDraft: boolean) => {
     if (!form.title.trim()) return setError('A title is required.')
     if (!asDraft && form.images.length === 0) return setError('Add at least one photo before publishing.')
     if (!asDraft && !(Number(form.price) > 0)) return setError('Set a price before publishing.')
@@ -79,10 +87,16 @@ export default function AdminProductForm() {
       })
       navigate('/admin')
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : String(err))
       setBusy(false)
     }
   }
+
+  const toggles: ['is_new_arrival' | 'in_stock' | 'pinned', string, string][] = [
+    ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
+    ['in_stock', 'In stock', 'Turn off to show "Sold out"'],
+    ['pinned', 'Pin to top', 'Keeps this piece first in the catalog'],
+  ]
 
   const inputClass =
     'w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-3 text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100'
@@ -197,11 +211,7 @@ export default function AdminProductForm() {
         </div>
 
         <div className="space-y-2.5 rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
-          {[
-            ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
-            ['in_stock', 'In stock', 'Turn off to show "Sold out"'],
-            ['pinned', 'Pin to top', 'Keeps this piece first in the catalog'],
-          ].map(([key, label, hint]) => (
+          {toggles.map(([key, label, hint]) => (
             <label key={key} className="flex cursor-pointer items-center justify-between gap-3">
               <span>
                 <span className="block text-sm font-medium text-night-800 dark:text-cream-100">{label}</span>

@@ -2,7 +2,9 @@
 // Images are inline SVG placeholders in the brand palette; real product
 // photos replace these the moment actual pieces are added.
 
-function placeholder(label, bg, fg) {
+import type { Product } from '../types'
+
+function placeholder(label: string, bg: string, fg: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750">
     <rect width="600" height="750" fill="${bg}"/>
     <circle cx="300" cy="330" r="150" fill="${fg}" opacity="0.25"/>
@@ -13,9 +15,9 @@ function placeholder(label, bg, fg) {
 }
 
 const now = Date.now()
-const days = (n) => new Date(now - n * 24 * 60 * 60 * 1000).toISOString()
+const days = (n: number) => new Date(now - n * 24 * 60 * 60 * 1000).toISOString()
 
-export const seedProducts = [
+export const seedProducts: Product[] = [
   {
     id: 'demo-anarkali-marigold',
     title: 'Marigold Anarkali Kurti',
@@ -29,6 +31,7 @@ export const seedProducts = [
       placeholder('Fabric close-up', '#fdf8e9', '#d3a512'),
     ],
     is_new_arrival: true,
+    new_until: days(-2),
     in_stock: true,
     is_draft: false,
     pinned: true,
@@ -44,6 +47,7 @@ export const seedProducts = [
     sizes: ['M', 'L', 'XL'],
     images: [placeholder('Fuchsia Suit Set', '#f8e3ec', '#c2185b')],
     is_new_arrival: true,
+    new_until: days(-1),
     in_stock: true,
     is_draft: false,
     pinned: false,
@@ -59,6 +63,7 @@ export const seedProducts = [
     sizes: [],
     images: [placeholder('Green Cotton Saree', '#e6efe6', '#2e7d32')],
     is_new_arrival: false,
+    new_until: null,
     in_stock: true,
     is_draft: false,
     pinned: false,
@@ -74,6 +79,7 @@ export const seedProducts = [
     sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
     images: [placeholder('Chikankari Kurti', '#f2ebdc', '#8a690b')],
     is_new_arrival: false,
+    new_until: null,
     in_stock: false,
     is_draft: false,
     pinned: false,
@@ -89,6 +95,7 @@ export const seedProducts = [
     sizes: [],
     images: [placeholder('Ombre Dupatta', '#fdf1e0', '#e0447c')],
     is_new_arrival: false,
+    new_until: null,
     in_stock: true,
     is_draft: false,
     pinned: false,

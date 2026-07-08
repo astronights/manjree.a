@@ -1,6 +1,5 @@
--- Manjree's catalog schema. Run in the Supabase SQL editor of a fresh
--- project, then create the admin user under Authentication → Users and set
--- VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in the app's environment.
+-- Products table, RLS policies, and the public image bucket.
+-- Applied by `npm run db:migrate` (scripts/migrate.mjs) — see README.
 
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),

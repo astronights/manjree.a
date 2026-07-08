@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { formatPrice, whatsappLink, shop } from '../config.js'
-import { getProduct, isNew } from '../lib/store.js'
+import { formatPrice, whatsappLink, shop } from '../config'
+import { getProduct, isNew } from '../lib/store'
+import { recordEvent, recordViewOnce } from '../lib/analytics'
+import { enquiredAt, markEnquired } from '../lib/enquiries'
+import type { Product } from '../types'
 
 function WhatsAppIcon() {
   return (
@@ -12,14 +15,20 @@ function WhatsAppIcon() {
 }
 
 export default function ProductDetail() {
-  const { id } = useParams()
-  const [product, setProduct] = useState(undefined)
+  const { id = '' } = useParams()
+  const [product, setProduct] = useState<Product | null | undefined>(undefined)
   const [imageIndex, setImageIndex] = useState(0)
   const [size, setSize] = useState('')
+  const [enquired, setEnquired] = useState<string | null>(() => enquiredAt(id))
 
   useEffect(() => {
+    setEnquired(enquiredAt(id))
     getProduct(id).then(setProduct).catch(() => setProduct(null))
   }, [id])
+
+  useEffect(() => {
+    if (product && !product.is_draft) recordViewOnce(product.id)
+  }, [product])
 
   if (product === undefined) {
     return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
@@ -114,6 +123,12 @@ export default function ProductDetail() {
         {formatPrice(product.price)}
       </p>
 
+      {enquired && (
+        <p className="mt-2 text-xs font-medium text-leaf-500">
+          ✓ You enquired about this on {new Date(enquired).toLocaleDateString()} (on this device)
+        </p>
+      )}
+
       {!product.in_stock && (
         <p className="mt-2 inline-block rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900">
           Currently sold out — enquire to be notified on restock
@@ -150,6 +165,11 @@ export default function ProductDetail() {
           href={whatsappLink(product, size)}
           target="_blank"
           rel="noreferrer"
+          onClick={() => {
+            recordEvent('enquiry', product.id).catch(() => {})
+            markEnquired(product.id)
+            setEnquired(new Date().toISOString())
+          }}
           className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-semibold text-white shadow-md transition hover:brightness-95"
         >
           <WhatsAppIcon />

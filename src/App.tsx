@@ -1,11 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
-import Header from './components/Header.jsx'
-import Home from './pages/Home.jsx'
-import ProductDetail from './pages/ProductDetail.jsx'
-import AdminGuard from './pages/admin/AdminGuard.jsx'
-import AdminLogin from './pages/admin/AdminLogin.jsx'
-import AdminDashboard from './pages/admin/AdminDashboard.jsx'
-import AdminProductForm from './pages/admin/AdminProductForm.jsx'
+import Header from './components/Header'
+import Home from './pages/Home'
+import ProductDetail from './pages/ProductDetail'
+import AdminGuard from './pages/admin/AdminGuard'
+import AdminLogin from './pages/admin/AdminLogin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminProductForm from './pages/admin/AdminProductForm'
+import AdminAnalytics from './pages/admin/AdminAnalytics'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<AdminGuard />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/new" element={<AdminProductForm />} />
           <Route path="/admin/edit/:id" element={<AdminProductForm />} />
         </Route>

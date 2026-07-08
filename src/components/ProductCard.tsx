@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom'
-import { formatPrice } from '../config.js'
-import { isNew } from '../lib/store.js'
+import { formatPrice } from '../config'
+import { isNew } from '../lib/store'
+import { enquiredAt } from '../lib/enquiries'
+import type { Product } from '../types'
 
-export default function ProductCard({ product, size = 'normal' }) {
+interface Props {
+  product: Product
+  size?: 'normal' | 'featured'
+}
+
+export default function ProductCard({ product, size = 'normal' }: Props) {
   const wide = size === 'featured'
   return (
     <Link
@@ -21,6 +28,11 @@ export default function ProductCard({ product, size = 'normal' }) {
         {isNew(product) && (
           <span className="absolute left-2 top-2 rounded-full bg-marigold-400 px-2 py-0.5 text-[11px] font-semibold text-night-900 shadow">
             New
+          </span>
+        )}
+        {enquiredAt(product.id) && (
+          <span className="absolute right-2 top-2 rounded-full bg-leaf-500 px-2 py-0.5 text-[11px] font-medium text-white shadow">
+            ✓ Enquired
           </span>
         )}
         {!product.in_stock && (

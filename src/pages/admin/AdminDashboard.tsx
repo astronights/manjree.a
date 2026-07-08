@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { formatPrice } from '../../config.js'
-import { deleteProduct, isNew, listProducts, saveProduct, signOut } from '../../lib/store.js'
+import { formatPrice } from '../../config'
+import { deleteProduct, isNew, listProducts, saveProduct, signOut } from '../../lib/store'
+import type { Product } from '../../types'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const [products, setProducts] = useState(null)
+  const [products, setProducts] = useState<Product[] | null>(null)
 
   const refresh = () => listProducts({ includeDrafts: true }).then(setProducts)
   useEffect(() => {
     refresh()
   }, [])
 
-  const remove = async (product) => {
+  const remove = async (product: Product) => {
     if (!confirm(`Delete "${product.title}"? This cannot be undone.`)) return
     await deleteProduct(product.id)
     refresh()
   }
 
-  const duplicate = async (product) => {
+  const duplicate = async (product: Product) => {
     const copy = {
       ...product,
       id: undefined,
@@ -44,15 +45,20 @@ export default function AdminDashboard() {
     <main className="mx-auto max-w-3xl px-4 pb-16">
       <div className="flex items-center justify-between pt-5">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Your pieces</h1>
+          <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Catalog</h1>
           <p className="text-xs text-night-700/60 dark:text-cream-300/60">
             {products.length} total · {products.filter((p) => p.is_draft).length} drafts ·{' '}
             {products.filter((p) => !p.in_stock).length} sold out
           </p>
         </div>
-        <button onClick={logout} className="text-sm text-night-700/70 underline dark:text-cream-300/70">
-          Sign out
-        </button>
+        <div className="flex items-center gap-4">
+          <Link to="/admin/analytics" className="text-sm font-medium text-leaf-500 hover:underline">
+            Analytics
+          </Link>
+          <button onClick={logout} className="text-sm text-night-700/70 underline dark:text-cream-300/70">
+            Lock
+          </button>
+        </div>
       </div>
 
       <Link

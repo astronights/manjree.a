@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { shop } from '../config.js'
-import { useTheme } from '../hooks/useTheme.js'
+import { shop } from '../config'
+import { useTheme } from '../hooks/useTheme'
 
 function SunIcon() {
   return (

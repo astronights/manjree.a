@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
-import { isAdmin } from '../../lib/store.js'
+import { isAdmin } from '../../lib/store'
 
 // Wraps admin routes; kicks unauthenticated visitors to the login page.
 export default function AdminGuard() {
-  const [state, setState] = useState('checking')
+  const [state, setState] = useState<'checking' | 'in' | 'out'>('checking')
 
   useEffect(() => {
     isAdmin().then((ok) => setState(ok ? 'in' : 'out'))

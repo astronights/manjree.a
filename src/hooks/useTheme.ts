@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 
 const KEY = 'manjrees.theme'
 
-function systemPrefersDark() {
+type Theme = 'light' | 'dark' | 'system'
+
+function systemPrefersDark(): boolean {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem(KEY) || 'system')
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem(KEY) as Theme) || 'system')
 
   useEffect(() => {
     const apply = () => {
@@ -22,7 +24,7 @@ export function useTheme() {
 
   const toggle = () => {
     const dark = document.documentElement.classList.contains('dark')
-    const next = dark ? 'light' : 'dark'
+    const next: Theme = dark ? 'light' : 'dark'
     localStorage.setItem(KEY, next)
     setTheme(next)
   }

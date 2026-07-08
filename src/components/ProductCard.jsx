@@ -1,0 +1,45 @@
+import { Link } from 'react-router-dom'
+import { formatPrice } from '../config.js'
+import { isNew } from '../lib/store.js'
+
+export default function ProductCard({ product, size = 'normal' }) {
+  const wide = size === 'featured'
+  return (
+    <Link
+      to={`/product/${product.id}`}
+      className={`group block overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-cream-300/50 transition hover:shadow-md dark:bg-night-800 dark:ring-night-700 ${
+        wide ? 'w-44 shrink-0 sm:w-52' : ''
+      }`}
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-cream-200 dark:bg-night-700">
+        <img
+          src={product.images[0]}
+          alt={product.title}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+        />
+        {isNew(product) && (
+          <span className="absolute left-2 top-2 rounded-full bg-marigold-400 px-2 py-0.5 text-[11px] font-semibold text-night-900 shadow">
+            New
+          </span>
+        )}
+        {!product.in_stock && (
+          <span className="absolute inset-x-0 bottom-0 bg-night-900/70 py-1 text-center text-xs font-medium text-cream-100">
+            Sold out
+          </span>
+        )}
+      </div>
+      <div className="p-3">
+        <h3 className="truncate font-display text-sm font-semibold text-night-800 dark:text-cream-100">
+          {product.title}
+        </h3>
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+            {formatPrice(product.price)}
+          </span>
+          <span className="text-[11px] text-night-700/60 dark:text-cream-300/60">{product.category}</span>
+        </div>
+      </div>
+    </Link>
+  )
+}

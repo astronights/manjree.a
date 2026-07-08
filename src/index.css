@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand palette — sampled from the Manjree's logo direction (design doc §6) */
+  --color-marigold-50: #fdf8e9;
+  --color-marigold-100: #faeec6;
+  --color-marigold-300: #f0d268;
+  --color-marigold-400: #e8b923;
+  --color-marigold-500: #d3a512;
+  --color-marigold-600: #b0880d;
+  --color-marigold-700: #8a690b;
+
+  --color-bougainvillea-400: #e0447c;
+  --color-bougainvillea-500: #c2185b;
+  --color-bougainvillea-600: #a3134c;
+
+  --color-leaf-500: #2e7d32;
+  --color-leaf-600: #256428;
+
+  /* Warm cream base, warm (not stark black) dark mode */
+  --color-cream-50: #fdfbf6;
+  --color-cream-100: #faf6ee;
+  --color-cream-200: #f2ebdc;
+  --color-cream-300: #e5dac2;
+  --color-night-700: #3a332a;
+  --color-night-800: #2a251e;
+  --color-night-900: #1e1a14;
+
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background-color: var(--color-cream-100);
+}
+
+html.dark {
+  background-color: var(--color-night-900);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbars on horizontal strips (new arrivals row, chips) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

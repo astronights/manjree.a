@@ -10,28 +10,36 @@ function renderHome() {
   )
 }
 
+async function ready() {
+  return await screen.findByRole('button', { name: /New Arrivals/ })
+}
+
 describe('Home', () => {
-  it('shows the seeded catalog with a New Arrivals row', async () => {
+  it('defaults to the New Arrivals tab, showing each new piece once', async () => {
     renderHome()
-    expect(await screen.findByText('New Arrivals')).toBeInTheDocument()
-    // Pinned new arrival appears twice: once featured, once in the grid
-    expect(screen.getAllByText('Marigold Anarkali Kurti').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
+    await ready()
+    expect(screen.getAllByText('Marigold Anarkali Kurti')).toHaveLength(1)
+    expect(screen.getByText('Fuchsia Chanderi Suit Set')).toBeInTheDocument()
+    // Non-new pieces stay behind the All tab
+    expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
   })
 
-  it('marks sold-out and on-order pieces', async () => {
+  it('shows the full catalog under All, with stock bands', async () => {
     renderHome()
-    await screen.findByText('New Arrivals')
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: 'All' }))
+    expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
     expect(screen.getByText('Sold out')).toBeInTheDocument()
     expect(screen.getByText('Available on order')).toBeInTheDocument()
   })
 
   it('shows collection chips and filters by collection', async () => {
     renderHome()
-    await screen.findByText('New Arrivals')
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: 'All' }))
     fireEvent.click(screen.getByRole('button', { name: /Festive Edit/ }))
     expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
-    expect(screen.getAllByText('Fuchsia Chanderi Suit Set').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Fuchsia Chanderi Suit Set')).toBeInTheDocument()
     // Tapping again clears the collection filter
     fireEvent.click(screen.getByRole('button', { name: /Festive Edit/ }))
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
@@ -39,7 +47,7 @@ describe('Home', () => {
 
   it('filters the grid by category', async () => {
     renderHome()
-    await screen.findByText('New Arrivals')
+    await ready()
     fireEvent.click(screen.getByRole('button', { name: 'Saree' }))
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
     expect(screen.queryByText('Cream Chikankari Kurti')).not.toBeInTheDocument()

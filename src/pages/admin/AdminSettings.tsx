@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { defaultCategories, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import { defaultCategories, defaultNewArrivalDays, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
 
 // One entry per line; commas also accepted.
 function parseList(text: string): string[] {
@@ -13,6 +13,7 @@ function parseList(text: string): string[] {
 export default function AdminSettings() {
   const [categoriesText, setCategoriesText] = useState<string | null>(null)
   const [sizesText, setSizesText] = useState('')
+  const [daysText, setDaysText] = useState(String(defaultNewArrivalDays))
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,6 +22,7 @@ export default function AdminSettings() {
     getSettings().then((s) => {
       setCategoriesText(s.categories.join('\n'))
       setSizesText(s.sizes.join(', '))
+      setDaysText(String(s.new_arrival_days))
     })
   }, [])
 
@@ -36,9 +38,11 @@ export default function AdminSettings() {
       const clean = await saveSettings({
         categories: parseList(categoriesText),
         sizes: parseList(sizesText),
+        new_arrival_days: Number(daysText),
       })
       setCategoriesText(clean.categories.join('\n'))
       setSizesText(clean.sizes.join(', '))
+      setDaysText(String(clean.new_arrival_days))
       setSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -50,6 +54,7 @@ export default function AdminSettings() {
   const resetDefaults = () => {
     setCategoriesText(defaultCategories.join('\n'))
     setSizesText(defaultSizes.join(', '))
+    setDaysText(String(defaultNewArrivalDays))
     setSaved(false)
   }
 
@@ -92,6 +97,23 @@ export default function AdminSettings() {
           />
           <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Comma-separated, in display order.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">
+            "New" badge duration (days)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={60}
+            value={daysText}
+            onChange={(e) => setDaysText(e.target.value)}
+            className={areaClass}
+          />
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+            How long a piece stays in New Arrivals after being marked new (1–60 days).
           </p>
         </div>
 

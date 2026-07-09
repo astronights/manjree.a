@@ -18,9 +18,13 @@ export const defaultCategories = [
 // Indian garment sizes 36–54 in steps of two.
 export const defaultSizes = Array.from({ length: 10 }, (_, i) => String(36 + i * 2))
 
+// How long the "New" badge (and New Arrivals tab membership) lasts.
+export const defaultNewArrivalDays = 3
+
 export interface ShopSettings {
   categories: string[]
   sizes: string[]
+  new_arrival_days: number
 }
 
 const LS_KEY = 'manjrees.settings'
@@ -31,10 +35,20 @@ function sanitizeList(value: unknown, fallback: string[]): string[] {
   return list.length ? list : fallback
 }
 
-function withDefaults(raw: { categories?: unknown; sizes?: unknown }): ShopSettings {
+function sanitizeDays(value: unknown): number {
+  const n = Math.round(Number(value))
+  return Number.isFinite(n) && n >= 1 && n <= 60 ? n : defaultNewArrivalDays
+}
+
+function withDefaults(raw: {
+  categories?: unknown
+  sizes?: unknown
+  new_arrival_days?: unknown
+}): ShopSettings {
   return {
     categories: sanitizeList(raw.categories, defaultCategories),
     sizes: sanitizeList(raw.sizes, defaultSizes),
+    new_arrival_days: sanitizeDays(raw.new_arrival_days),
   }
 }
 

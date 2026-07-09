@@ -17,10 +17,8 @@ export const shop = {
   adminEmail: import.meta.env.VITE_ADMIN_EMAIL || 'admin@manjrees.local',
 }
 
-// Categories and sizes are admin-editable settings — see src/lib/settings.ts.
-
-// How long a piece keeps its "New" treatment after being marked a new arrival.
-export const NEW_ARRIVAL_DAYS = 3
+// Categories, sizes and the "New" badge duration are admin-editable
+// settings — see src/lib/settings.ts.
 
 export function whatsappLink(product: Product, size?: string): string {
   const ref = product.id.slice(0, 8).toUpperCase()

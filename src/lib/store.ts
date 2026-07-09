@@ -5,7 +5,8 @@
 
 import { supabase } from './supabase'
 import { seedProducts } from './seed'
-import { NEW_ARRIVAL_DAYS, shop } from '../config'
+import { shop } from '../config'
+import { defaultNewArrivalDays } from './settings'
 import type { Product, ProductInput } from '../types'
 
 export const isSupabaseMode = Boolean(supabase)
@@ -16,8 +17,8 @@ export function isNew(product: Product): boolean {
   return new Date(product.new_until).getTime() > Date.now()
 }
 
-export function newUntilFromNow(): string {
-  return new Date(Date.now() + NEW_ARRIVAL_DAYS * 24 * 60 * 60 * 1000).toISOString()
+export function newUntilFromNow(days: number = defaultNewArrivalDays): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
 }
 
 function sortProducts(list: Product[]): Product[] {

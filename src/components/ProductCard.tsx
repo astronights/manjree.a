@@ -5,20 +5,12 @@ import { enquiredAt } from '../lib/enquiries'
 import { coverMedia, isVideo } from '../lib/media'
 import type { Product } from '../types'
 
-interface Props {
-  product: Product
-  size?: 'normal' | 'featured'
-}
-
-export default function ProductCard({ product, size = 'normal' }: Props) {
-  const wide = size === 'featured'
+export default function ProductCard({ product }: { product: Product }) {
   const cover = coverMedia(product.images)
   return (
     <Link
       to={`/product/${product.id}`}
-      className={`group block overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-cream-300/50 transition hover:shadow-md dark:bg-night-800 dark:ring-night-700 ${
-        wide ? 'w-44 shrink-0 sm:w-52' : ''
-      }`}
+      className="group block overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-cream-300/50 transition hover:shadow-md dark:bg-night-800 dark:ring-night-700"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-cream-200 dark:bg-night-700">
         {cover && isVideo(cover) ? (

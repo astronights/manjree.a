@@ -132,7 +132,7 @@ export default function AdminProductForm() {
         price: Number(form.price) || 0,
         is_draft: asDraft,
         // Stamp the auto-expiry whenever the piece is (still) marked new.
-        new_until: form.is_new_arrival ? form.new_until ?? newUntilFromNow() : null,
+        new_until: form.is_new_arrival ? form.new_until ?? newUntilFromNow(settings.new_arrival_days) : null,
       })
       navigate('/admin')
     } catch (err) {
@@ -356,7 +356,7 @@ export default function AdminProductForm() {
                 onChange={(e) =>
                   set(
                     key === 'is_new_arrival'
-                      ? { is_new_arrival: e.target.checked, new_until: e.target.checked ? newUntilFromNow() : null }
+                      ? { is_new_arrival: e.target.checked, new_until: e.target.checked ? newUntilFromNow(settings.new_arrival_days) : null }
                       : { [key]: e.target.checked },
                   )
                 }

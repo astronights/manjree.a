@@ -281,20 +281,37 @@ export default function AdminProductForm() {
 
         <div>
           <label className={labelClass}>Collection (optional)</label>
+          {collections.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {collections.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => set({ collection: form.collection === c ? null : c })}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                    form.collection === c
+                      ? 'border-marigold-500 bg-marigold-400 font-semibold text-night-900'
+                      : 'border-cream-300 bg-cream-50 text-night-700 dark:border-night-700 dark:bg-night-800 dark:text-cream-200'
+                  }`}
+                >
+                  ✦ {c}
+                </button>
+              ))}
+            </div>
+          )}
           <input
-            list="collection-options"
             value={form.collection ?? ''}
             onChange={(e) => set({ collection: e.target.value || null })}
-            placeholder='e.g. "Diwali 2026" — pick one or type a new name'
-            className={`mt-1.5 ${inputClass}`}
+            placeholder={
+              collections.length > 0
+                ? 'Or type a new collection name'
+                : 'e.g. "Diwali 2026" — type a name to start a collection'
+            }
+            className={`mt-2 ${inputClass}`}
           />
-          <datalist id="collection-options">
-            {collections.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
           <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
-            Pieces sharing a collection get a festive filter chip on the home page.
+            Tap an existing collection or type a new one. Pieces sharing a collection get a festive
+            filter chip on the home page.
           </p>
         </div>
 

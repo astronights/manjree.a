@@ -14,6 +14,8 @@ const base: Omit<Product, 'id' | 'created_at'> = {
   in_stock: true,
   is_draft: false,
   pinned: false,
+  show_price: true,
+  collection: null,
 }
 
 describe('local product store', () => {

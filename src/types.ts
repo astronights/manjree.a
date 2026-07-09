@@ -11,6 +11,8 @@ export interface Product {
   in_stock: boolean
   is_draft: boolean
   pinned: boolean
+  show_price: boolean
+  collection: string | null
   created_at: string
 }
 

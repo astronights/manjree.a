@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { formatPrice } from '../../config'
 import { deleteProduct, isNew, listProducts, saveProduct, signOut } from '../../lib/store'
+import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
 
 export default function AdminDashboard() {
@@ -74,7 +75,14 @@ export default function AdminDashboard() {
             key={p.id}
             className="flex gap-3 rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"
           >
-            <img src={p.images[0]} alt="" className="h-20 w-16 shrink-0 rounded-lg object-cover" />
+            {(() => {
+              const cover = coverMedia(p.images)
+              return cover && isVideo(cover) ? (
+                <video src={cover} muted playsInline preload="metadata" className="h-20 w-16 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <img src={cover} alt="" className="h-20 w-16 shrink-0 rounded-lg bg-cream-200 object-cover dark:bg-night-700" />
+              )
+            })()}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="truncate font-display font-semibold text-night-800 dark:text-cream-100">

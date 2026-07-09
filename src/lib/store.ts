@@ -122,20 +122,34 @@ export async function deleteProduct(id: string): Promise<void> {
   localWrite(localRead().filter((p) => p.id !== id))
 }
 
-export async function uploadImages(files: Iterable<File>): Promise<string[]> {
+const MAX_VIDEO_MB = 50
+
+export async function uploadMedia(files: Iterable<File>): Promise<string[]> {
   if (supabase) {
     const urls: string[] = []
     for (const file of files) {
+      if (file.type.startsWith('video/') && file.size > MAX_VIDEO_MB * 1024 * 1024) {
+        throw new Error(`"${file.name}" is over ${MAX_VIDEO_MB} MB — trim or compress the video first.`)
+      }
       const ext = file.name.split('.').pop() || 'jpg'
       const path = `${crypto.randomUUID()}.${ext}`
-      const { error } = await supabase.storage.from('product-images').upload(path, file)
+      const { error } = await supabase.storage
+        .from('product-images')
+        .upload(path, file, { contentType: file.type || undefined })
       if (error) throw error
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)
       urls.push(data.publicUrl)
     }
     return urls
   }
-  return Promise.all([...files].map((f) => fileToDataUrl(f)))
+  return Promise.all(
+    [...files].map((f) => {
+      if (f.type.startsWith('video/')) {
+        throw new Error('Videos need the Supabase backend — demo mode only supports photos.')
+      }
+      return fileToDataUrl(f)
+    }),
+  )
 }
 
 // ----------------------------------------------------------------------- auth

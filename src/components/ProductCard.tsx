@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { formatPrice } from '../config'
 import { isNew } from '../lib/store'
 import { enquiredAt } from '../lib/enquiries'
+import { coverMedia, isVideo } from '../lib/media'
 import type { Product } from '../types'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export default function ProductCard({ product, size = 'normal' }: Props) {
   const wide = size === 'featured'
+  const cover = coverMedia(product.images)
   return (
     <Link
       to={`/product/${product.id}`}
@@ -19,12 +21,22 @@ export default function ProductCard({ product, size = 'normal' }: Props) {
       }`}
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-cream-200 dark:bg-night-700">
-        <img
-          src={product.images[0]}
-          alt={product.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-        />
+        {cover && isVideo(cover) ? (
+          <video
+            src={cover}
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <img
+            src={cover}
+            alt={product.title}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+        )}
         {isNew(product) && (
           <span className="absolute left-2 top-2 rounded-full bg-marigold-400 px-2 py-0.5 text-[11px] font-semibold text-night-900 shadow">
             New
@@ -46,9 +58,13 @@ export default function ProductCard({ product, size = 'normal' }: Props) {
           {product.title}
         </h3>
         <div className="mt-1 flex items-center justify-between">
-          <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-            {formatPrice(product.price)}
-          </span>
+          {product.show_price !== false ? (
+            <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+              {formatPrice(product.price)}
+            </span>
+          ) : (
+            <span className="text-xs text-night-700/60 dark:text-cream-300/60">Price on request</span>
+          )}
           <span className="text-[11px] text-night-700/60 dark:text-cream-300/60">{product.category}</span>
         </div>
       </div>

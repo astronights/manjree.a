@@ -25,6 +25,17 @@ describe('Home', () => {
     expect(screen.getByText('Sold out')).toBeInTheDocument()
   })
 
+  it('shows collection chips and filters by collection', async () => {
+    renderHome()
+    await screen.findByText('New Arrivals')
+    fireEvent.click(screen.getByRole('button', { name: /Festive Edit/ }))
+    expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Fuchsia Chanderi Suit Set').length).toBeGreaterThanOrEqual(1)
+    // Tapping again clears the collection filter
+    fireEvent.click(screen.getByRole('button', { name: /Festive Edit/ }))
+    expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
+  })
+
   it('filters the grid by category', async () => {
     renderHome()
     await screen.findByText('New Arrivals')

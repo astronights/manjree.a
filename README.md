@@ -12,9 +12,11 @@ admin alike. Two experiences in one codebase:
   enquired about get a "✓ Enquired" tag on that device — a personal reminder,
   no account needed.
 - **Admin panel** (`/admin`, passcode-protected): add/edit/delete/duplicate
-  pieces, multi-photo upload, draft mode, sold-out / new-arrival / pin
-  toggles — plus an **analytics page** showing views and WhatsApp enquiries
-  per piece and activity per (anonymous) device.
+  pieces, photo **and video** upload, AI-suggested titles/descriptions
+  (Gemini, via a serverless function), draft mode, sold-out / new-arrival /
+  show-price / pin toggles, collections ("Diwali 2026") — plus an
+  **analytics page** showing views and WhatsApp enquiries per piece and
+  activity per (anonymous) device.
 
 Installable on Android and iOS via "Add to Home Screen".
 
@@ -72,11 +74,23 @@ Everything is scripted — no SQL pasting in the dashboard:
 
 ## Deploying to Vercel
 
-Import the GitHub repo in Vercel (framework preset: Vite) and set the
-`VITE_*` environment variables in the project settings (`SUPABASE_DB_URL` and
-the service-role key are only needed where you run the scripts, not in
-Vercel). Every push to the production branch auto-deploys. `vercel.json`
-contains the SPA rewrite so deep links like `/product/<id>` work.
+Import the GitHub repo in Vercel (framework preset: Vite) and set these
+environment variables in the project settings: `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_ANON_KEY`, `VITE_WHATSAPP_NUMBER`, `VITE_ADMIN_EMAIL` (must
+match the value used with `admin:create`), and `GEMINI_API_KEY` (server-side,
+for the AI suggestion function — key from https://aistudio.google.com/apikey).
+`SUPABASE_DB_URL` and the service-role key are only needed where you run the
+scripts, not in Vercel. Remember: changing env vars requires a redeploy.
+Every push to the production branch auto-deploys. `vercel.json` contains the
+SPA rewrite (which excludes `/api/*` so the serverless function works).
+
+### AI suggestions ("Suggest title & description")
+
+The button in the add/edit form sends the cover photo to `api/generate.ts`,
+a Vercel serverless function that calls Gemini with `GEMINI_API_KEY` — the
+key never reaches the browser. Under `npm run dev` there is no function
+runtime; set `VITE_GEMINI_API_KEY` in your local `.env` if you want the
+button to work in local development (never set that variable in Vercel).
 
 ## Analytics & privacy
 

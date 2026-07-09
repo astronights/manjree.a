@@ -8,6 +8,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [category, setCategory] = useState('All')
+  const [collection, setCollection] = useState<string | null>(null)
 
   useEffect(() => {
     listProducts()
@@ -16,9 +17,18 @@ export default function Home() {
   }, [])
 
   const newArrivals = useMemo(() => (products ?? []).filter(isNew), [products])
+  const collections = useMemo(
+    () => [...new Set((products ?? []).map((p) => p.collection).filter((c): c is string => Boolean(c)))],
+    [products],
+  )
   const filtered = useMemo(
-    () => (products ?? []).filter((p) => category === 'All' || p.category === category),
-    [products, category],
+    () =>
+      (products ?? []).filter(
+        (p) =>
+          (category === 'All' || p.category === category) &&
+          (collection === null || p.collection === collection),
+      ),
+    [products, category, collection],
   )
 
   if (error) {
@@ -44,6 +54,23 @@ export default function Home() {
       )}
 
       <section className="pt-6">
+        {collections.length > 0 && (
+          <div className="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-1">
+            {collections.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCollection(collection === c ? null : c)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                  collection === c
+                    ? 'border-marigold-500 bg-marigold-400 text-night-900'
+                    : 'border-marigold-400/60 bg-marigold-50 text-marigold-700 hover:bg-marigold-100 dark:border-marigold-600 dark:bg-night-800 dark:text-marigold-300'
+                }`}
+              >
+                ✦ {c}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {['All', ...categories].map((c) => (
             <button

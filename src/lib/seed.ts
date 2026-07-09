@@ -35,6 +35,8 @@ export const seedProducts: Product[] = [
     in_stock: true,
     is_draft: false,
     pinned: true,
+    show_price: true,
+    collection: 'Festive Edit',
     created_at: days(1),
   },
   {
@@ -51,6 +53,8 @@ export const seedProducts: Product[] = [
     in_stock: true,
     is_draft: false,
     pinned: false,
+    show_price: true,
+    collection: 'Festive Edit',
     created_at: days(2),
   },
   {
@@ -67,6 +71,8 @@ export const seedProducts: Product[] = [
     in_stock: true,
     is_draft: false,
     pinned: false,
+    show_price: true,
+    collection: null,
     created_at: days(9),
   },
   {
@@ -83,6 +89,8 @@ export const seedProducts: Product[] = [
     in_stock: false,
     is_draft: false,
     pinned: false,
+    show_price: true,
+    collection: null,
     created_at: days(20),
   },
   {
@@ -99,6 +107,8 @@ export const seedProducts: Product[] = [
     in_stock: true,
     is_draft: false,
     pinned: false,
+    show_price: true,
+    collection: null,
     created_at: days(15),
   },
 ]

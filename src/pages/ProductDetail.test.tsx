@@ -3,7 +3,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ProductDetail from './ProductDetail'
 import { fetchEvents } from '../lib/analytics'
 import { enquiredAt } from '../lib/enquiries'
-import { listProducts } from '../lib/store'
+import { listProducts, saveProduct } from '../lib/store'
+import { seedProducts } from '../lib/seed'
 
 function renderDetail(id: string) {
   return render(
@@ -58,6 +59,15 @@ describe('ProductDetail', () => {
     expect(await screen.findByText(/You enquired about this/)).toBeInTheDocument()
     expect(enquiredAt('demo-anarkali-marigold')).toBeTruthy()
     expect((await fetchEvents()).filter((e) => e.event_type === 'enquiry')).toHaveLength(1)
+  })
+
+  it('hides the price when show_price is off', async () => {
+    await saveProduct({ ...seedProducts[0], id: undefined, created_at: undefined, title: 'Secret Price Kurti', show_price: false })
+    const saved = (await listProducts()).find((p) => p.title === 'Secret Price Kurti')!
+    renderDetail(saved.id)
+    await screen.findByRole('heading', { name: 'Secret Price Kurti' })
+    expect(screen.getByText(/Price on request/)).toBeInTheDocument()
+    expect(screen.queryByText('₹1,450')).not.toBeInTheDocument()
   })
 
   it('shows the sold-out notice', async () => {

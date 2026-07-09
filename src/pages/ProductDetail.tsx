@@ -4,6 +4,7 @@ import { formatPrice, whatsappLink, shop } from '../config'
 import { getProduct, isNew } from '../lib/store'
 import { recordEvent, recordViewOnce } from '../lib/analytics'
 import { enquiredAt, markEnquired } from '../lib/enquiries'
+import { isVideo } from '../lib/media'
 import type { Product } from '../types'
 
 function WhatsAppIcon() {
@@ -72,14 +73,25 @@ export default function ProductDetail() {
             setImageIndex(Math.round(el.scrollLeft / el.clientWidth))
           }}
         >
-          {product.images.map((src, i) => (
-            <img
-              key={i}
-              src={src}
-              alt={`${product.title} — photo ${i + 1}`}
-              className="aspect-[4/5] w-full shrink-0 snap-center object-cover"
-            />
-          ))}
+          {product.images.map((src, i) =>
+            isVideo(src) ? (
+              <video
+                key={i}
+                src={src}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-[4/5] w-full shrink-0 snap-center bg-night-900 object-contain"
+              />
+            ) : (
+              <img
+                key={i}
+                src={src}
+                alt={`${product.title} — photo ${i + 1}`}
+                className="aspect-[4/5] w-full shrink-0 snap-center object-cover"
+              />
+            ),
+          )}
         </div>
         {isNew(product) && (
           <span className="absolute left-3 top-3 rounded-full bg-marigold-400 px-2.5 py-1 text-xs font-semibold text-night-900 shadow">
@@ -119,9 +131,21 @@ export default function ProductDetail() {
         </button>
       </div>
 
-      <p className="mt-2 text-xl font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-        {formatPrice(product.price)}
-      </p>
+      {product.show_price !== false ? (
+        <p className="mt-2 text-xl font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+          {formatPrice(product.price)}
+        </p>
+      ) : (
+        <p className="mt-2 text-sm font-medium text-night-700/70 dark:text-cream-300/70">
+          Price on request — ask on WhatsApp
+        </p>
+      )}
+
+      {product.collection && (
+        <p className="mt-1.5 inline-block rounded-full bg-marigold-100 px-2.5 py-0.5 text-xs font-medium text-marigold-700 dark:bg-night-800 dark:text-marigold-300">
+          {product.collection}
+        </p>
+      )}
 
       {enquired && (
         <p className="mt-2 text-xs font-medium text-leaf-500">

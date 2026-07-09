@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   }
 
   if (!products) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   return (
@@ -47,19 +47,19 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between pt-5">
         <div>
           <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Catalog</h1>
-          <p className="text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="text-sm text-night-700/80 dark:text-cream-300/60">
             {products.length} total · {products.filter((p) => p.is_draft).length} drafts ·{' '}
             {products.filter((p) => !p.in_stock).length} sold out
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/admin/analytics" className="text-sm font-medium text-leaf-500 hover:underline">
+          <Link to="/admin/analytics" className="text-base font-medium text-leaf-500 hover:underline">
             Analytics
           </Link>
-          <Link to="/admin/settings" className="text-sm font-medium text-leaf-500 hover:underline">
+          <Link to="/admin/settings" className="text-base font-medium text-leaf-500 hover:underline">
             Settings
           </Link>
-          <button onClick={logout} className="text-sm text-night-700/70 underline dark:text-cream-300/70">
+          <button onClick={logout} className="text-base text-night-700/85 underline dark:text-cream-300/70">
             Lock
           </button>
         </div>
@@ -92,34 +92,34 @@ export default function AdminDashboard() {
                   {p.title}
                 </span>
                 {p.is_draft && (
-                  <span className="rounded-full bg-cream-300 px-2 py-0.5 text-[10px] font-medium text-night-700 dark:bg-night-700 dark:text-cream-200">
+                  <span className="rounded-full bg-cream-300 px-2 py-0.5 text-xs font-medium text-night-700 dark:bg-night-700 dark:text-cream-200">
                     Draft
                   </span>
                 )}
                 {isNew(p) && (
-                  <span className="rounded-full bg-marigold-400 px-2 py-0.5 text-[10px] font-semibold text-night-900">
+                  <span className="rounded-full bg-marigold-400 px-2 py-0.5 text-xs font-semibold text-night-900">
                     New
                   </span>
                 )}
                 {!p.in_stock && (
-                  <span className="rounded-full bg-bougainvillea-500 px-2 py-0.5 text-[10px] font-medium text-white">
+                  <span className="rounded-full bg-bougainvillea-500 px-2 py-0.5 text-xs font-medium text-white">
                     Sold out
                   </span>
                 )}
                 {p.pinned && (
-                  <span className="rounded-full bg-leaf-500 px-2 py-0.5 text-[10px] font-medium text-white">
+                  <span className="rounded-full bg-leaf-500 px-2 py-0.5 text-xs font-medium text-white">
                     Pinned
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-sm text-night-700/70 dark:text-cream-300/70">
+              <p className="mt-0.5 text-base text-night-700/85 dark:text-cream-300/70">
                 {formatPrice(p.price)} · {p.category}
               </p>
-              <div className="mt-1.5 flex gap-3 text-sm">
+              <div className="mt-1.5 flex gap-3 text-base">
                 <Link to={`/admin/edit/${p.id}`} className="font-medium text-leaf-500 hover:underline">
                   Edit
                 </Link>
-                <button onClick={() => duplicate(p)} className="text-night-700/70 hover:underline dark:text-cream-300/70">
+                <button onClick={() => duplicate(p)} className="text-night-700/85 hover:underline dark:text-cream-300/70">
                   Duplicate
                 </button>
                 <button onClick={() => remove(p)} className="text-bougainvillea-500 hover:underline">

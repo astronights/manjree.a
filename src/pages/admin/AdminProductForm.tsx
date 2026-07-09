@@ -53,7 +53,7 @@ export default function AdminProductForm() {
   }, [id])
 
   if (!form || !settings) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   // Keep values from before a settings edit selectable (e.g. a piece saved
@@ -150,11 +150,11 @@ export default function AdminProductForm() {
 
   const inputClass =
     'w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-3 text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100'
-  const labelClass = 'block text-sm font-medium text-night-800 dark:text-cream-100'
+  const labelClass = 'block text-base font-medium text-night-800 dark:text-cream-100'
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-16">
-      <Link to="/admin" className="mt-3 inline-block text-sm text-night-700/70 hover:underline dark:text-cream-300/70">
+      <Link to="/admin" className="mt-3 inline-block text-base text-night-700/85 hover:underline dark:text-cream-300/70">
         ← Back to dashboard
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">
@@ -173,7 +173,7 @@ export default function AdminProductForm() {
                   <img src={src} alt="" className="h-full w-full object-cover" />
                 )}
                 {isVideo(src) && (
-                  <span className="absolute right-1 top-1 rounded bg-night-900/70 px-1.5 text-[10px] font-medium text-cream-100">
+                  <span className="absolute right-1 top-1 rounded bg-night-900/70 px-1.5 text-xs font-medium text-cream-100">
                     ▶ Video
                   </span>
                 )}
@@ -183,19 +183,19 @@ export default function AdminProductForm() {
                   <button onClick={() => movePhoto(i, 1)} aria-label="Move right" className="px-1.5">›</button>
                 </div>
                 {i === 0 && (
-                  <span className="absolute left-1 top-1 rounded bg-marigold-400 px-1.5 text-[10px] font-semibold text-night-900">
+                  <span className="absolute left-1 top-1 rounded bg-marigold-400 px-1.5 text-xs font-semibold text-night-900">
                     Cover
                   </span>
                 )}
               </div>
             ))}
-            <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-cream-300 text-night-700/60 transition hover:border-marigold-400 dark:border-night-700 dark:text-cream-300/60">
+            <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-cream-300 text-night-700/80 transition hover:border-marigold-400 dark:border-night-700 dark:text-cream-300/60">
               <span className="text-2xl">+</span>
-              <span className="px-1 text-center text-xs">Add photos / videos</span>
+              <span className="px-1 text-center text-sm">Add photos / videos</span>
               <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={addPhotos} />
             </label>
           </div>
-          <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Select several at once (front, back, fabric close-up, a short video). The first item is
             the cover — photos make the best covers.
           </p>
@@ -205,7 +205,7 @@ export default function AdminProductForm() {
           type="button"
           onClick={suggest}
           disabled={aiBusy || busy}
-          className="w-full rounded-xl border border-marigold-400/70 bg-marigold-50 py-2.5 text-sm font-medium text-marigold-700 transition hover:bg-marigold-100 disabled:opacity-50 dark:border-marigold-600 dark:bg-night-800 dark:text-marigold-300"
+          className="w-full rounded-xl border border-marigold-400/70 bg-marigold-50 py-2.5 text-base font-medium text-marigold-700 transition hover:bg-marigold-100 disabled:opacity-50 dark:border-marigold-600 dark:bg-night-800 dark:text-marigold-300"
         >
           {aiBusy ? 'Looking at the photo…' : '✨ Suggest title & description from photo'}
         </button>
@@ -264,7 +264,7 @@ export default function AdminProductForm() {
                 key={s}
                 type="button"
                 onClick={() => toggleSize(s)}
-                className={`min-w-11 rounded-lg border px-3 py-1.5 text-sm transition ${
+                className={`min-w-11 rounded-lg border px-3 py-1.5 text-base transition ${
                   form.sizes.includes(s)
                     ? 'border-marigold-500 bg-marigold-400 font-semibold text-night-900'
                     : 'border-cream-300 bg-cream-50 text-night-700 dark:border-night-700 dark:bg-night-800 dark:text-cream-200'
@@ -274,7 +274,7 @@ export default function AdminProductForm() {
               </button>
             ))}
           </div>
-          <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Leave all unselected for free-size pieces (sarees, dupattas).
           </p>
         </div>
@@ -288,7 +288,7 @@ export default function AdminProductForm() {
                   key={c}
                   type="button"
                   onClick={() => set({ collection: form.collection === c ? null : c })}
-                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  className={`rounded-full border px-3 py-1.5 text-base transition ${
                     form.collection === c
                       ? 'border-marigold-500 bg-marigold-400 font-semibold text-night-900'
                       : 'border-cream-300 bg-cream-50 text-night-700 dark:border-night-700 dark:bg-night-800 dark:text-cream-200'
@@ -309,7 +309,7 @@ export default function AdminProductForm() {
             }
             className={`mt-2 ${inputClass}`}
           />
-          <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Tap an existing collection or type a new one. Pieces sharing a collection get a festive
             filter chip on the home page.
           </p>
@@ -319,8 +319,8 @@ export default function AdminProductForm() {
           {toggles.map(([key, label, hint]) => (
             <label key={key} className="flex cursor-pointer items-center justify-between gap-3">
               <span>
-                <span className="block text-sm font-medium text-night-800 dark:text-cream-100">{label}</span>
-                <span className="block text-xs text-night-700/60 dark:text-cream-300/60">{hint}</span>
+                <span className="block text-base font-medium text-night-800 dark:text-cream-100">{label}</span>
+                <span className="block text-sm text-night-700/80 dark:text-cream-300/60">{hint}</span>
               </span>
               <input
                 type="checkbox"
@@ -338,7 +338,7 @@ export default function AdminProductForm() {
           ))}
         </div>
 
-        {error && <p className="text-sm text-bougainvillea-500">{error}</p>}
+        {error && <p className="text-base text-bougainvillea-500">{error}</p>}
 
         <div className="flex gap-3">
           <button

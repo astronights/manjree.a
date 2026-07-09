@@ -44,7 +44,7 @@ export default function Home() {
     return <p className="p-8 text-center text-sm text-bougainvillea-500">Could not load the catalog: {error}</p>
   }
   if (!products) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-sm text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   return (
@@ -97,7 +97,7 @@ export default function Home() {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="py-16 text-center text-sm text-night-700/60 dark:text-cream-300/60">
+          <p className="py-16 text-center text-sm text-night-700/80 dark:text-cream-300/60">
             No pieces in this category yet — check back soon!
           </p>
         ) : (

@@ -15,7 +15,7 @@ function StatTile({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
       <p className="font-display text-3xl font-semibold text-night-800 dark:text-cream-100">{value}</p>
-      <p className="mt-1 text-xs text-night-700/70 dark:text-cream-300/70">{label}</p>
+      <p className="mt-1 text-sm text-night-700/85 dark:text-cream-300/70">{label}</p>
     </div>
   )
 }
@@ -31,10 +31,10 @@ export default function AdminAnalytics() {
   }, [])
 
   if (error) {
-    return <p className="p-8 text-center text-sm text-bougainvillea-500">Could not load analytics: {error}</p>
+    return <p className="p-8 text-center text-base text-bougainvillea-500">Could not load analytics: {error}</p>
   }
   if (!data) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   const { totals, byProduct, byDevice } = data
@@ -42,7 +42,7 @@ export default function AdminAnalytics() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
-      <Link to="/admin" className="mt-3 inline-block text-sm text-night-700/70 hover:underline dark:text-cream-300/70">
+      <Link to="/admin" className="mt-3 inline-block text-base text-night-700/85 hover:underline dark:text-cream-300/70">
         ← Catalog
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Analytics</h1>
@@ -54,7 +54,7 @@ export default function AdminAnalytics() {
       </div>
 
       {byProduct.length === 0 ? (
-        <p className="py-16 text-center text-sm text-night-700/60 dark:text-cream-300/60">
+        <p className="py-16 text-center text-base text-night-700/80 dark:text-cream-300/60">
           No activity yet — numbers appear as customers browse the catalog.
         </p>
       ) : (
@@ -63,7 +63,7 @@ export default function AdminAnalytics() {
             <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
               Most viewed pieces
             </h2>
-            <p className="text-xs text-night-700/60 dark:text-cream-300/60">
+            <p className="text-sm text-night-700/80 dark:text-cream-300/60">
               Views count once per device per visit; enquiries are WhatsApp taps.
             </p>
             <ul className="mt-3 space-y-2">
@@ -79,7 +79,7 @@ export default function AdminAnalytics() {
                       <span className="h-12 w-10 shrink-0 rounded-lg bg-cream-200 dark:bg-night-700" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-night-800 dark:text-cream-100">
+                      <p className="truncate text-base font-medium text-night-800 dark:text-cream-100">
                         {row.product ? (
                           <Link to={`/product/${row.product.id}`} className="hover:underline">
                             {row.product.title}
@@ -96,12 +96,12 @@ export default function AdminAnalytics() {
                             style={{ width: `${(row.views / maxViews) * 100}%` }}
                           />
                         </div>
-                        <span className="w-14 shrink-0 text-right text-xs tabular-nums text-night-700 dark:text-cream-200">
+                        <span className="w-14 shrink-0 text-right text-sm tabular-nums text-night-700 dark:text-cream-200">
                           {row.views} view{row.views === 1 ? '' : 's'}
                         </span>
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-full bg-cream-200 px-2.5 py-1 text-xs tabular-nums text-night-700 dark:bg-night-700 dark:text-cream-200">
+                    <span className="shrink-0 rounded-full bg-cream-200 px-2.5 py-1 text-sm tabular-nums text-night-700 dark:bg-night-700 dark:text-cream-200">
                       {row.enquiries} ✆
                     </span>
                   </div>
@@ -114,7 +114,7 @@ export default function AdminAnalytics() {
             <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
               Activity by device
             </h2>
-            <p className="text-xs text-night-700/60 dark:text-cream-300/60">
+            <p className="text-sm text-night-700/80 dark:text-cream-300/60">
               Customers don't log in — each browser gets an anonymous id, so one person can appear as
               two devices (e.g. phone and laptop).
             </p>
@@ -124,10 +124,10 @@ export default function AdminAnalytics() {
                   key={d.deviceId}
                   className="flex items-center justify-between gap-3 rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"
                 >
-                  <span className="font-mono text-xs text-night-700 dark:text-cream-200">
+                  <span className="font-mono text-sm text-night-700 dark:text-cream-200">
                     {d.deviceId.slice(0, 8)}
                   </span>
-                  <span className="text-xs tabular-nums text-night-700/70 dark:text-cream-300/70">
+                  <span className="text-sm tabular-nums text-night-700/85 dark:text-cream-300/70">
                     {d.views} views · {d.enquiries} enquiries · {relativeDay(d.lastActive)}
                   </span>
                 </li>

@@ -63,9 +63,9 @@ export default function ProductCard({ product, size = 'normal' }: Props) {
               {formatPrice(product.price)}
             </span>
           ) : (
-            <span className="text-xs text-night-700/60 dark:text-cream-300/60">Price on request</span>
+            <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
           )}
-          <span className="text-[11px] text-night-700/60 dark:text-cream-300/60">{product.category}</span>
+          <span className="text-[11px] text-night-700/80 dark:text-cream-300/60">{product.category}</span>
         </div>
       </div>
     </Link>

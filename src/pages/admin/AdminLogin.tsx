@@ -41,11 +41,11 @@ export default function AdminLogin() {
           className="w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-3 text-center text-lg tracking-widest text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
         />
         {!isSupabaseMode && (
-          <p className="text-center text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="text-center text-sm text-night-700/80 dark:text-cream-300/60">
             Demo mode — the passcode is 1234 (set VITE_DEMO_ADMIN_PIN to change it).
           </p>
         )}
-        {error && <p className="text-center text-sm text-bougainvillea-500">{error}</p>}
+        {error && <p className="text-center text-base text-bougainvillea-500">{error}</p>}
         <button
           type="submit"
           disabled={busy}
@@ -54,7 +54,7 @@ export default function AdminLogin() {
           {busy ? 'Unlocking…' : 'Unlock'}
         </button>
       </form>
-      <p className="mt-6 text-center text-[11px] text-night-700/50 dark:text-cream-300/50">
+      <p className="mt-6 text-center text-xs text-night-700/70 dark:text-cream-300/50">
         {isSupabaseMode ? `Supabase project: ${projectRef}` : 'Local demo mode — no backend connected'}
       </p>
     </main>

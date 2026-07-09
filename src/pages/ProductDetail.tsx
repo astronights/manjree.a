@@ -32,12 +32,12 @@ export default function ProductDetail() {
   }, [product])
 
   if (product === undefined) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-sm text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
   if (product === null || product.is_draft) {
     return (
       <div className="p-8 text-center">
-        <p className="text-sm text-night-700/70 dark:text-cream-300/70">This piece could not be found.</p>
+        <p className="text-sm text-night-700/85 dark:text-cream-300/70">This piece could not be found.</p>
         <Link to="/" className="mt-2 inline-block text-sm font-medium text-bougainvillea-500 underline">
           Back to the catalog
         </Link>
@@ -61,7 +61,7 @@ export default function ProductDetail() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-28">
-      <Link to="/" className="mt-3 inline-block text-sm text-night-700/70 hover:underline dark:text-cream-300/70">
+      <Link to="/" className="mt-3 inline-block text-sm text-night-700/85 hover:underline dark:text-cream-300/70">
         ← All pieces
       </Link>
 
@@ -115,7 +115,7 @@ export default function ProductDetail() {
           <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">
             {product.title}
           </h1>
-          <p className="mt-1 text-xs uppercase tracking-wide text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-xs uppercase tracking-wide text-night-700/80 dark:text-cream-300/60">
             {product.category}
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function ProductDetail() {
           {formatPrice(product.price)}
         </p>
       ) : (
-        <p className="mt-2 text-sm font-medium text-night-700/70 dark:text-cream-300/70">
+        <p className="mt-2 text-sm font-medium text-night-700/85 dark:text-cream-300/70">
           Price on request — ask on WhatsApp
         </p>
       )}

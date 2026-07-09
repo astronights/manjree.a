@@ -25,7 +25,7 @@ export default function AdminSettings() {
   }, [])
 
   if (categoriesText === null) {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   const save = async () => {
@@ -58,7 +58,7 @@ export default function AdminSettings() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-16">
-      <Link to="/admin" className="mt-3 inline-block text-sm text-night-700/70 hover:underline dark:text-cream-300/70">
+      <Link to="/admin" className="mt-3 inline-block text-base text-night-700/85 hover:underline dark:text-cream-300/70">
         ← Catalog
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">
@@ -67,7 +67,7 @@ export default function AdminSettings() {
 
       <div className="mt-5 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-night-800 dark:text-cream-100">
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">
             Categories
           </label>
           <textarea
@@ -76,27 +76,27 @@ export default function AdminSettings() {
             rows={9}
             className={areaClass}
           />
-          <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             One per line, in the order they should appear as filters. Pieces already saved under a
             removed category keep it until edited.
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-night-800 dark:text-cream-100">Sizes</label>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">Sizes</label>
           <textarea
             value={sizesText}
             onChange={(e) => setSizesText(e.target.value)}
             rows={2}
             className={areaClass}
           />
-          <p className="mt-1 text-xs text-night-700/60 dark:text-cream-300/60">
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Comma-separated, in display order.
           </p>
         </div>
 
-        {error && <p className="text-sm text-bougainvillea-500">{error}</p>}
-        {saved && <p className="text-sm font-medium text-leaf-500">✓ Saved</p>}
+        {error && <p className="text-base text-bougainvillea-500">{error}</p>}
+        {saved && <p className="text-base font-medium text-leaf-500">✓ Saved</p>}
 
         <div className="flex gap-3">
           <button

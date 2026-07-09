@@ -42,7 +42,7 @@ export default function Header() {
             <span className="block font-display text-xl font-semibold text-night-800 dark:text-cream-100">
               {shop.name}
             </span>
-            <span className="block text-[11px] tracking-wide text-night-700/70 dark:text-cream-300/70">
+            <span className="block text-[11px] tracking-wide text-night-700/85 dark:text-cream-300/70">
               {shop.tagline}
             </span>
           </span>

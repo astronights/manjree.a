@@ -11,7 +11,7 @@ export default function AdminGuard() {
   }, [])
 
   if (state === 'checking') {
-    return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
+    return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
   return state === 'in' ? <Outlet /> : <Navigate to="/admin/login" replace />
 }

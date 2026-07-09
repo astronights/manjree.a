@@ -23,11 +23,22 @@ function buildPrompt(hints: { title?: string; description?: string }): string {
 }
 
 export default async function handler(req: any, res: any) {
+  try {
+    return await generate(req, res)
+  } catch (err) {
+    // Anything unexpected still produces a readable response + a log line.
+    console.error('generate: unhandled error', err)
+    return res.status(500).json({ error: err instanceof Error ? err.message : 'Unexpected server error' })
+  }
+}
+
+async function generate(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' })
   }
   const key = process.env.GEMINI_API_KEY
   if (!key) {
+    console.error('generate: GEMINI_API_KEY missing — set it in Vercel env vars and redeploy')
     return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel' })
   }
   const { image, title, description } = req.body ?? {}
@@ -55,6 +66,7 @@ export default async function handler(req: any, res: any) {
   )
   const json = await upstream.json().catch(() => ({}))
   if (!upstream.ok) {
+    console.error(`generate: Gemini HTTP ${upstream.status}`, JSON.stringify(json).slice(0, 500))
     return res.status(502).json({ error: json.error?.message ?? `Gemini error (HTTP ${upstream.status})` })
   }
   try {
@@ -65,6 +77,7 @@ export default async function handler(req: any, res: any) {
       category: CATEGORIES.includes(out.category) ? out.category : undefined,
     })
   } catch {
+    console.error('generate: unparseable Gemini response', JSON.stringify(json).slice(0, 500))
     return res.status(502).json({ error: 'Could not parse the AI response — try again' })
   }
 }

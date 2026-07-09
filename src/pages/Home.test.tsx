@@ -19,10 +19,11 @@ describe('Home', () => {
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
   })
 
-  it('marks sold-out pieces', async () => {
+  it('marks sold-out and on-order pieces', async () => {
     renderHome()
     await screen.findByText('New Arrivals')
     expect(screen.getByText('Sold out')).toBeInTheDocument()
+    expect(screen.getByText('Available on order')).toBeInTheDocument()
   })
 
   it('shows collection chips and filters by collection', async () => {

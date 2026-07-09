@@ -49,7 +49,8 @@ export default function AdminDashboard() {
           <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Catalog</h1>
           <p className="text-sm text-night-700/80 dark:text-cream-300/60">
             {products.length} total · {products.filter((p) => p.is_draft).length} drafts ·{' '}
-            {products.filter((p) => !p.in_stock).length} sold out
+            {products.filter((p) => p.stock_status === 'sold_out').length} sold out ·{' '}
+            {products.filter((p) => p.stock_status === 'on_order').length} on order
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -101,9 +102,14 @@ export default function AdminDashboard() {
                     New
                   </span>
                 )}
-                {!p.in_stock && (
+                {p.stock_status === 'sold_out' && (
                   <span className="rounded-full bg-bougainvillea-500 px-2 py-0.5 text-xs font-medium text-white">
                     Sold out
+                  </span>
+                )}
+                {p.stock_status === 'on_order' && (
+                  <span className="rounded-full bg-marigold-100 px-2 py-0.5 text-xs font-medium text-marigold-700 dark:bg-night-700 dark:text-marigold-300">
+                    On order
                   </span>
                 )}
                 {p.pinned && (

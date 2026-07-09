@@ -32,9 +32,15 @@ function sortProducts(list: Product[]): Product[] {
 const LS_KEY = 'manjrees.products'
 const LS_ADMIN = 'manjrees.admin'
 
+// Upgrades records saved by older app versions (boolean in_stock era).
+function normalize(p: Product & { in_stock?: boolean }): Product {
+  if (!p.stock_status) p.stock_status = p.in_stock === false ? 'sold_out' : 'in_stock'
+  return p
+}
+
 function localRead(): Product[] {
   const raw = localStorage.getItem(LS_KEY)
-  if (raw) return JSON.parse(raw) as Product[]
+  if (raw) return (JSON.parse(raw) as Product[]).map(normalize)
   localStorage.setItem(LS_KEY, JSON.stringify(seedProducts))
   return seedProducts
 }

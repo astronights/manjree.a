@@ -11,7 +11,7 @@ const base: Omit<Product, 'id' | 'created_at'> = {
   images: ['data:image/svg+xml,x'],
   is_new_arrival: false,
   new_until: null,
-  in_stock: true,
+  stock_status: 'in_stock' as const,
   is_draft: false,
   pinned: false,
   show_price: true,
@@ -79,6 +79,16 @@ describe('isNew', () => {
   it('expires once new_until has passed', () => {
     const past = new Date(Date.now() - 86400000).toISOString()
     expect(isNew({ ...product, is_new_arrival: true, new_until: past })).toBe(false)
+  })
+})
+
+describe('legacy data upgrade', () => {
+  it('maps the old in_stock boolean onto stock_status', async () => {
+    const legacy = { ...base, id: 'legacy-1', created_at: new Date().toISOString(), in_stock: false }
+    delete (legacy as Record<string, unknown>).stock_status
+    localStorage.setItem('manjrees.products', JSON.stringify([legacy]))
+    const [p] = await listProducts()
+    expect(p.stock_status).toBe('sold_out')
   })
 })
 

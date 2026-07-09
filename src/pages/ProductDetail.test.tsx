@@ -76,6 +76,12 @@ describe('ProductDetail', () => {
     expect(screen.getByText(/Currently sold out/)).toBeInTheDocument()
   })
 
+  it('shows the on-order notice', async () => {
+    renderDetail('demo-dupatta-sunset')
+    await screen.findByRole('heading', { name: 'Sunset Ombre Dupatta' })
+    expect(screen.getByText(/Made on order/)).toBeInTheDocument()
+  })
+
   it('shows a friendly message for unknown pieces', async () => {
     renderDetail('does-not-exist')
     expect(await screen.findByText(/could not be found/)).toBeInTheDocument()

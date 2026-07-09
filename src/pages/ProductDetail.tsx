@@ -153,9 +153,15 @@ export default function ProductDetail() {
         </p>
       )}
 
-      {!product.in_stock && (
+      {product.stock_status === 'sold_out' && (
         <p className="mt-2 inline-block rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900">
           Currently sold out — enquire to be notified on restock
+        </p>
+      )}
+
+      {product.stock_status === 'on_order' && (
+        <p className="mt-2 inline-block rounded-full bg-leaf-500 px-3 py-1 text-xs font-medium text-white">
+          Made on order — ask on WhatsApp for timelines
         </p>
       )}
 

@@ -23,7 +23,7 @@ const blank: ProductForm = {
   images: [],
   is_new_arrival: true,
   new_until: null,
-  in_stock: true,
+  stock_status: 'in_stock',
   is_draft: false,
   pinned: false,
   show_price: true,
@@ -141,11 +141,16 @@ export default function AdminProductForm() {
     }
   }
 
-  const toggles: ['is_new_arrival' | 'in_stock' | 'pinned' | 'show_price', string, string][] = [
+  const toggles: ['is_new_arrival' | 'pinned' | 'show_price', string, string][] = [
     ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
-    ['in_stock', 'In stock', 'Turn off to show "Sold out"'],
     ['show_price', 'Show price', 'Turn off to show "Price on request" instead'],
     ['pinned', 'Pin to top', 'Keeps this piece first in the catalog'],
+  ]
+
+  const stockOptions: [Product['stock_status'], string, string][] = [
+    ['in_stock', 'In stock', 'Ready to ship'],
+    ['on_order', 'On order', 'Shown as "Available on order"'],
+    ['sold_out', 'Sold out', 'Shown with a "Sold out" band'],
   ]
 
   const inputClass =
@@ -312,6 +317,29 @@ export default function AdminProductForm() {
           <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             Tap an existing collection or type a new one. Pieces sharing a collection get a festive
             filter chip on the home page.
+          </p>
+        </div>
+
+        <div>
+          <label className={labelClass}>Availability</label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {stockOptions.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => set({ stock_status: value })}
+                className={`rounded-xl border px-2 py-2.5 text-base transition ${
+                  form.stock_status === value
+                    ? 'border-marigold-500 bg-marigold-400 font-semibold text-night-900'
+                    : 'border-cream-300 bg-cream-50 text-night-700 dark:border-night-700 dark:bg-night-800 dark:text-cream-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+            {stockOptions.find(([v]) => v === form.stock_status)?.[2]}
           </p>
         </div>
 

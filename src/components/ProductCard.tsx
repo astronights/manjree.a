@@ -47,9 +47,14 @@ export default function ProductCard({ product, size = 'normal' }: Props) {
             ✓ Enquired
           </span>
         )}
-        {!product.in_stock && (
+        {product.stock_status === 'sold_out' && (
           <span className="absolute inset-x-0 bottom-0 bg-night-900/70 py-1 text-center text-xs font-medium text-cream-100">
             Sold out
+          </span>
+        )}
+        {product.stock_status === 'on_order' && (
+          <span className="absolute inset-x-0 bottom-0 bg-leaf-500/90 py-1 text-center text-xs font-medium text-white">
+            Available on order
           </span>
         )}
       </div>

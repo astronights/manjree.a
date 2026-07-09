@@ -1,3 +1,5 @@
+export type StockStatus = 'in_stock' | 'sold_out' | 'on_order'
+
 export interface Product {
   id: string
   title: string
@@ -8,7 +10,7 @@ export interface Product {
   images: string[]
   is_new_arrival: boolean
   new_until: string | null
-  in_stock: boolean
+  stock_status: StockStatus
   is_draft: boolean
   pinned: boolean
   show_price: boolean

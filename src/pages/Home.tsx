@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { categories } from '../config'
+import { getSettings } from '../lib/settings'
 import { listProducts, isNew } from '../lib/store'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
@@ -9,11 +9,15 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [category, setCategory] = useState('All')
   const [collection, setCollection] = useState<string | null>(null)
+  const [settingsCategories, setSettingsCategories] = useState<string[]>([])
 
   useEffect(() => {
     listProducts()
       .then(setProducts)
       .catch((e: Error) => setError(e.message))
+    getSettings()
+      .then((s) => setSettingsCategories(s.categories))
+      .catch(() => {})
   }, [])
 
   const newArrivals = useMemo(() => (products ?? []).filter(isNew), [products])
@@ -30,6 +34,11 @@ export default function Home() {
       ),
     [products, category, collection],
   )
+  // Configured categories plus any legacy ones still in use on pieces.
+  const categoryChips = useMemo(() => {
+    const inUse = [...new Set((products ?? []).map((p) => p.category))]
+    return ['All', ...settingsCategories, ...inUse.filter((c) => !settingsCategories.includes(c))]
+  }, [products, settingsCategories])
 
   if (error) {
     return <p className="p-8 text-center text-sm text-bougainvillea-500">Could not load the catalog: {error}</p>
@@ -72,7 +81,7 @@ export default function Home() {
           </div>
         )}
         <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {['All', ...categories].map((c) => (
+          {categoryChips.map((c) => (
             <button
               key={c}
               onClick={() => setCategory(c)}

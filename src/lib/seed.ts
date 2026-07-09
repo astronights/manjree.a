@@ -25,7 +25,7 @@ export const seedProducts: Product[] = [
       'Flowy cotton anarkali in a warm marigold shade with delicate gota detailing at the neckline. Perfect for festive daywear.',
     price: 1450,
     category: 'Kurti',
-    sizes: ['S', 'M', 'L', 'XL'],
+    sizes: ['38', '40', '42', '44'],
     images: [
       placeholder('Marigold Anarkali', '#faeec6', '#b0880d'),
       placeholder('Fabric close-up', '#fdf8e9', '#d3a512'),
@@ -45,8 +45,8 @@ export const seedProducts: Product[] = [
     description:
       'Three-piece chanderi silk suit set — kurta, palazzo and organza dupatta — in bougainvillea pink with zari border.',
     price: 3250,
-    category: 'Suit Set',
-    sizes: ['M', 'L', 'XL'],
+    category: 'Kurti Set',
+    sizes: ['40', '42', '44'],
     images: [placeholder('Fuchsia Suit Set', '#f8e3ec', '#c2185b')],
     is_new_arrival: true,
     new_until: days(-1),
@@ -82,7 +82,7 @@ export const seedProducts: Product[] = [
       'Classic Lucknowi chikankari on soft cream mul cotton. Pairs with everything — a wardrobe staple.',
     price: 1150,
     category: 'Kurti',
-    sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    sizes: ['36', '38', '40', '42', '44', '46'],
     images: [placeholder('Chikankari Kurti', '#f2ebdc', '#8a690b')],
     is_new_arrival: false,
     new_until: null,

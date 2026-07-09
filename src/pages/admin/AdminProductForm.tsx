@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { categories, sizes as allSizes } from '../../config'
 import { getProduct, listProducts, newUntilFromNow, saveProduct, uploadMedia } from '../../lib/store'
+import { getSettings } from '../../lib/settings'
+import type { ShopSettings } from '../../lib/settings'
 import { suggestDetails } from '../../lib/ai'
 import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
@@ -17,7 +18,7 @@ const blank: ProductForm = {
   title: '',
   description: '',
   price: '',
-  category: categories[0],
+  category: '',
   sizes: [],
   images: [],
   is_new_arrival: true,
@@ -37,17 +38,31 @@ export default function AdminProductForm() {
   const [aiBusy, setAiBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [collections, setCollections] = useState<string[]>([])
+  const [settings, setSettings] = useState<ShopSettings | null>(null)
 
   useEffect(() => {
     if (id) getProduct(id).then(setForm)
+    getSettings().then((s) => {
+      setSettings(s)
+      // New pieces default to the first configured category.
+      if (!id) setForm((f) => (f && !f.category ? { ...f, category: s.categories[0] } : f))
+    })
     listProducts({ includeDrafts: true }).then((all) =>
       setCollections([...new Set(all.map((p) => p.collection).filter((c): c is string => Boolean(c)))]),
     )
   }, [id])
 
-  if (!form) {
+  if (!form || !settings) {
     return <p className="p-8 text-center text-sm text-night-700/60 dark:text-cream-300/60">Loading…</p>
   }
+
+  // Keep values from before a settings edit selectable (e.g. a piece saved
+  // under a category that was later renamed/removed).
+  const categoryOptions =
+    form.category && !settings.categories.includes(form.category)
+      ? [form.category, ...settings.categories]
+      : settings.categories
+  const sizeOptions = [...settings.sizes, ...form.sizes.filter((s) => !settings.sizes.includes(s))]
 
   const set = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f!, ...patch }))
 
@@ -86,11 +101,15 @@ export default function AdminProductForm() {
     setAiBusy(true)
     setError(null)
     try {
-      const s = await suggestDetails(photo, { title: form.title, description: form.description })
+      const s = await suggestDetails(
+        photo,
+        { title: form.title, description: form.description },
+        settings.categories,
+      )
       set({
         title: s.title || form.title,
         description: s.description || form.description,
-        ...(s.category && categories.includes(s.category) ? { category: s.category } : {}),
+        ...(s.category && settings.categories.includes(s.category) ? { category: s.category } : {}),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -230,7 +249,7 @@ export default function AdminProductForm() {
               onChange={(e) => set({ category: e.target.value })}
               className={`mt-1.5 ${inputClass}`}
             >
-              {categories.map((c) => (
+              {categoryOptions.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
@@ -240,7 +259,7 @@ export default function AdminProductForm() {
         <div>
           <label className={labelClass}>Available sizes</label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {allSizes.map((s) => (
+            {sizeOptions.map((s) => (
               <button
                 key={s}
                 type="button"

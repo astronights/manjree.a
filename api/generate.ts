@@ -6,15 +6,25 @@
 // import.meta.env, which doesn't exist in the function runtime.
 
 const MODEL = 'gemini-2.5-flash'
-const CATEGORIES = ['Kurti', 'Suit Set', 'Saree', 'Dupatta', 'Other']
+// Fallback when the client doesn't send its (admin-editable) category list.
+const DEFAULT_CATEGORIES = [
+  'Kurti',
+  'Kurti Pant',
+  'Kurti Set',
+  'Unstitched Suit Set',
+  'Saree',
+  'Dupatta',
+  'Kaftan Set',
+  'Other',
+]
 
-function buildPrompt(hints: { title?: string; description?: string }): string {
+function buildPrompt(hints: { title?: string; description?: string }, categories: string[]): string {
   return [
     "You write product listings for a small Indian women's ethnic wear boutique.",
     'Look at the photo and reply with JSON only: {"title": string, "description": string, "category": string}.',
     'title: elegant, specific, max 50 characters (garment type + fabric/colour/detail). No quotes or emoji.',
     'description: 2-3 warm, concrete sentences (fabric, work/detailing, occasion). No hashtags.',
-    `category: exactly one of ${JSON.stringify(CATEGORIES)}.`,
+    `category: exactly one of ${JSON.stringify(categories)}.`,
     hints.title ? `The seller's draft title (improve on it): ${hints.title}` : '',
     hints.description ? `The seller's notes (fold them in): ${hints.description}` : '',
   ]
@@ -41,10 +51,14 @@ async function generate(req: any, res: any) {
     console.error('generate: GEMINI_API_KEY missing — set it in Vercel env vars and redeploy')
     return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel' })
   }
-  const { image, title, description } = req.body ?? {}
+  const { image, title, description, categories: rawCategories } = req.body ?? {}
   if (!image?.data || !image?.mimeType) {
     return res.status(400).json({ error: 'A photo is required' })
   }
+  const categories = Array.isArray(rawCategories)
+    ? rawCategories.map((c: unknown) => String(c).trim()).filter(Boolean).slice(0, 30)
+    : []
+  const categoryList = categories.length ? categories : DEFAULT_CATEGORIES
 
   const upstream = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -56,7 +70,7 @@ async function generate(req: any, res: any) {
           {
             parts: [
               { inline_data: { mime_type: image.mimeType, data: image.data } },
-              { text: buildPrompt({ title, description }) },
+              { text: buildPrompt({ title, description }, categoryList) },
             ],
           },
         ],
@@ -74,7 +88,7 @@ async function generate(req: any, res: any) {
     return res.status(200).json({
       title: String(out.title ?? ''),
       description: String(out.description ?? ''),
-      category: CATEGORIES.includes(out.category) ? out.category : undefined,
+      category: categoryList.includes(out.category) ? out.category : undefined,
     })
   } catch {
     console.error('generate: unparseable Gemini response', JSON.stringify(json).slice(0, 500))

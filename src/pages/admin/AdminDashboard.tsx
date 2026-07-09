@@ -56,6 +56,9 @@ export default function AdminDashboard() {
           <Link to="/admin/analytics" className="text-sm font-medium text-leaf-500 hover:underline">
             Analytics
           </Link>
+          <Link to="/admin/settings" className="text-sm font-medium text-leaf-500 hover:underline">
+            Settings
+          </Link>
           <button onClick={logout} className="text-sm text-night-700/70 underline dark:text-cream-300/70">
             Lock
           </button>

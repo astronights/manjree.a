@@ -5,7 +5,7 @@
 // optional VITE_GEMINI_API_KEY in the local .env enables a direct call for
 // testing — that variable must never be set in Vercel.
 
-import { categories } from '../config'
+import { defaultCategories } from './settings'
 
 export interface Suggestion {
   title: string
@@ -18,7 +18,10 @@ interface InlineImage {
   mimeType: string
 }
 
-export function buildPrompt(hints: { title?: string; description?: string }): string {
+export function buildPrompt(
+  hints: { title?: string; description?: string },
+  categories: string[] = defaultCategories,
+): string {
   return [
     'You write product listings for a small Indian women\'s ethnic wear boutique.',
     'Look at the photo and reply with JSON only: {"title": string, "description": string, "category": string}.',
@@ -56,25 +59,30 @@ async function toInlineImage(url: string, maxDim = 768): Promise<InlineImage> {
 export async function suggestDetails(
   imageUrl: string,
   hints: { title?: string; description?: string },
+  categories: string[] = defaultCategories,
 ): Promise<Suggestion> {
   const image = await toInlineImage(imageUrl)
 
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image, ...hints }),
+    body: JSON.stringify({ image, categories, ...hints }),
   })
   if (res.ok) return (await res.json()) as Suggestion
 
   // Local dev fallback: vite has no /api runtime.
   if (import.meta.env.DEV && import.meta.env.VITE_GEMINI_API_KEY) {
-    return callGeminiDirect(image, hints)
+    return callGeminiDirect(image, hints, categories)
   }
   const err = (await res.json().catch(() => ({}))) as { error?: string }
   throw new Error(err.error ?? `AI suggestion failed (HTTP ${res.status})`)
 }
 
-async function callGeminiDirect(image: InlineImage, hints: { title?: string; description?: string }) {
+async function callGeminiDirect(
+  image: InlineImage,
+  hints: { title?: string; description?: string },
+  categories: string[],
+) {
   const res = await fetch(
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
     {
@@ -88,7 +96,7 @@ async function callGeminiDirect(image: InlineImage, hints: { title?: string; des
           {
             parts: [
               { inline_data: { mime_type: image.mimeType, data: image.data } },
-              { text: buildPrompt(hints) },
+              { text: buildPrompt(hints, categories) },
             ],
           },
         ],

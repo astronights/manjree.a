@@ -17,9 +17,7 @@ export const shop = {
   adminEmail: import.meta.env.VITE_ADMIN_EMAIL || 'admin@manjrees.local',
 }
 
-export const categories = ['Kurti', 'Suit Set', 'Saree', 'Dupatta', 'Other']
-
-export const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+// Categories and sizes are admin-editable settings — see src/lib/settings.ts.
 
 // How long a piece keeps its "New" treatment after being marked a new arrival.
 export const NEW_ARRIVAL_DAYS = 3

@@ -7,7 +7,7 @@ const base: Omit<Product, 'id' | 'created_at'> = {
   description: 'A test piece',
   price: 999,
   category: 'Kurti',
-  sizes: ['M'],
+  sizes: ['40'],
   images: ['data:image/svg+xml,x'],
   is_new_arrival: false,
   new_until: null,

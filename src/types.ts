@@ -5,6 +5,7 @@ export interface Product {
   title: string
   description: string
   price: number
+  sale_price: number | null
   category: string
   sizes: string[]
   images: string[]

@@ -4,7 +4,26 @@ import { formatPrice } from '../../config'
 import { deleteProduct, isNew, listProducts, saveProduct } from '../../lib/store'
 import { matchesQuery } from '../../lib/filters'
 import { coverMedia, isVideo } from '../../lib/media'
+import { onSale } from '../../lib/pricing'
 import type { Product } from '../../types'
+
+type AdminSort = 'newest' | 'oldest' | 'price_desc' | 'price_asc' | 'title'
+
+const ADMIN_SORTS: [AdminSort, string][] = [
+  ['newest', 'Recently added'],
+  ['oldest', 'Oldest first'],
+  ['price_desc', 'Price: high to low'],
+  ['price_asc', 'Price: low to high'],
+  ['title', 'Title A–Z'],
+]
+
+const SORTERS: Record<AdminSort, (a: Product, b: Product) => number> = {
+  newest: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  oldest: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  price_desc: (a, b) => b.price - a.price,
+  price_asc: (a, b) => a.price - b.price,
+  title: (a, b) => a.title.localeCompare(b.title),
+}
 
 type StatusFilter = 'all' | 'draft' | 'in_stock' | 'sold_out' | 'on_order'
 
@@ -21,6 +40,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[] | null>(null)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
+  const [sort, setSort] = useState<AdminSort>('newest')
 
   const refresh = () => listProducts({ includeDrafts: true }).then(setProducts)
   useEffect(() => {
@@ -50,11 +70,13 @@ export default function AdminDashboard() {
     return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
-  const visible = products.filter(
-    (p) =>
-      matchesQuery(p, query) &&
-      (status === 'all' || (status === 'draft' ? p.is_draft : p.stock_status === status)),
-  )
+  const visible = products
+    .filter(
+      (p) =>
+        matchesQuery(p, query) &&
+        (status === 'all' || (status === 'draft' ? p.is_draft : p.stock_status === status)),
+    )
+    .sort(SORTERS[sort])
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -89,13 +111,27 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search your pieces…"
-        className="mt-4 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
-      />
+      <div className="mt-4 flex gap-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search your pieces…"
+          className="min-w-0 flex-1 rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
+        />
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as AdminSort)}
+          aria-label="Sort pieces"
+          className="w-32 shrink-0 rounded-xl border border-cream-300 bg-cream-50 px-2 py-2.5 text-sm text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
+        >
+          {ADMIN_SORTS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="no-scrollbar -mx-4 mt-2.5 flex gap-2 overflow-x-auto px-4">
         {STATUS_CHIPS.map(([value, label]) => (
           <button
@@ -157,6 +193,11 @@ export default function AdminDashboard() {
                     On order
                   </span>
                 )}
+                {onSale(p) && (
+                  <span className="rounded-full border border-bougainvillea-500 px-2 py-0.5 text-xs font-medium text-bougainvillea-500">
+                    Sale
+                  </span>
+                )}
                 {p.pinned && (
                   <span className="rounded-full bg-leaf-500 px-2 py-0.5 text-xs font-medium text-white">
                     Pinned
@@ -164,7 +205,15 @@ export default function AdminDashboard() {
                 )}
               </div>
               <p className="mt-0.5 text-base text-night-700/85 dark:text-cream-300/70">
-                {formatPrice(p.price)} · {p.category}
+                {onSale(p) ? (
+                  <>
+                    <span className="line-through opacity-70">{formatPrice(p.price)}</span>{' '}
+                    {formatPrice(p.sale_price!)}
+                  </>
+                ) : (
+                  formatPrice(p.price)
+                )}{' '}
+                · {p.category}
               </p>
               <div className="mt-1.5 flex gap-3 text-base">
                 <Link to={`/admin/edit/${p.id}`} className="font-medium text-leaf-500 hover:underline">

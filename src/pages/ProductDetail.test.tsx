@@ -70,6 +70,14 @@ describe('ProductDetail', () => {
     expect(screen.queryByText('₹1,450')).not.toBeInTheDocument()
   })
 
+  it('shows sale pricing with the original struck through', async () => {
+    renderDetail('demo-saree-leafgreen') // seeded on sale: 2100 → 1799
+    await screen.findByRole('heading', { name: 'Leaf Green Cotton Saree' })
+    expect(screen.getByText('₹1,799')).toBeInTheDocument()
+    expect(screen.getByText('₹2,100')).toHaveClass('line-through')
+    expect(screen.getByText(/14% off/)).toBeInTheDocument()
+  })
+
   it('shows the sold-out notice', async () => {
     renderDetail('demo-kurti-cream')
     await screen.findByRole('heading', { name: 'Cream Chikankari Kurti' })

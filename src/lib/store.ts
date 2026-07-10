@@ -36,6 +36,7 @@ const LS_ADMIN = 'manjrees.admin'
 // Upgrades records saved by older app versions (boolean in_stock era).
 function normalize(p: Product & { in_stock?: boolean }): Product {
   if (!p.stock_status) p.stock_status = p.in_stock === false ? 'sold_out' : 'in_stock'
+  p.sale_price ??= null
   return p
 }
 
@@ -97,7 +98,13 @@ export async function saveProduct(product: ProductInput): Promise<Product> {
   const record = { ...product }
   if (supabase) {
     if (!record.id) delete record.id
-    const { data, error } = await supabase.from('products').upsert(record).select().single()
+    let { data, error } = await supabase.from('products').upsert(record).select().single()
+    if (error && String(error.message).includes('sale_price')) {
+      // Database not migrated to 0007 yet — save without the new column so
+      // the admin keeps working; sale pricing activates after db:migrate.
+      const { sale_price, ...legacy } = record
+      ;({ data, error } = await supabase.from('products').upsert(legacy).select().single())
+    }
     if (error) throw error
     return data as Product
   }

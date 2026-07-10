@@ -8,10 +8,11 @@ import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
 
 // While editing, price is the raw input string; converted on save.
-type ProductForm = Omit<Product, 'id' | 'created_at' | 'price'> & {
+type ProductForm = Omit<Product, 'id' | 'created_at' | 'price' | 'sale_price'> & {
   id?: string
   created_at?: string
   price: number | string
+  sale_price: number | string | null
 }
 
 const blank: ProductForm = {
@@ -24,6 +25,7 @@ const blank: ProductForm = {
   is_new_arrival: true,
   new_until: null,
   stock_status: 'in_stock',
+  sale_price: null,
   is_draft: false,
   pinned: false,
   show_price: true,
@@ -39,9 +41,14 @@ export default function AdminProductForm() {
   const [error, setError] = useState<string | null>(null)
   const [collections, setCollections] = useState<string[]>([])
   const [settings, setSettings] = useState<ShopSettings | null>(null)
+  const [saleOn, setSaleOn] = useState(false)
 
   useEffect(() => {
-    if (id) getProduct(id).then(setForm)
+    if (id)
+      getProduct(id).then((p) => {
+        setForm(p)
+        setSaleOn(p?.sale_price != null)
+      })
     getSettings().then((s) => {
       setSettings(s)
       // New pieces default to the first configured category.
@@ -124,12 +131,16 @@ export default function AdminProductForm() {
       return setError('Add at least one photo or video before publishing.')
     }
     if (!asDraft && !(Number(form.price) > 0)) return setError('Set a price before publishing.')
+    if (saleOn && !(Number(form.sale_price) > 0 && Number(form.sale_price) < Number(form.price))) {
+      return setError('The sale price must be above zero and below the regular price.')
+    }
     setBusy(true)
     setError(null)
     try {
       await saveProduct({
         ...form,
         price: Number(form.price) || 0,
+        sale_price: saleOn ? Number(form.sale_price) : null,
         is_draft: asDraft,
         // Stamp the auto-expiry whenever the piece is (still) marked new.
         new_until: form.is_new_arrival ? form.new_until ?? newUntilFromNow(settings.new_arrival_days) : null,
@@ -144,7 +155,7 @@ export default function AdminProductForm() {
   const toggles: ['is_new_arrival' | 'pinned' | 'show_price', string, string][] = [
     ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
     ['show_price', 'Show price', 'Turn off to show "Price on request" instead'],
-    ['pinned', 'Pin to top', 'Keeps this piece first in the catalog'],
+    ['pinned', 'Pin to top', 'Hero piece: always shown first, above new arrivals'],
   ]
 
   const stockOptions: [Product['stock_status'], string, string][] = [
@@ -259,6 +270,33 @@ export default function AdminProductForm() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
+          <label className="flex cursor-pointer items-center justify-between gap-3">
+            <span>
+              <span className="block text-base font-medium text-night-800 dark:text-cream-100">On sale</span>
+              <span className="block text-sm text-night-700/80 dark:text-cream-300/60">
+                Shows the sale price with the original struck through
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={saleOn}
+              onChange={(e) => setSaleOn(e.target.checked)}
+              className="h-5 w-5 accent-marigold-500"
+            />
+          </label>
+          {saleOn && (
+            <input
+              type="number"
+              min="0"
+              value={form.sale_price ?? ''}
+              onChange={(e) => set({ sale_price: e.target.value })}
+              placeholder="Sale price (₹)"
+              className={`mt-3 ${inputClass}`}
+            />
+          )}
         </div>
 
         <div>

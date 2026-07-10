@@ -3,6 +3,7 @@ import { formatPrice } from '../config'
 import { isNew } from '../lib/store'
 import { enquiredAt } from '../lib/enquiries'
 import { coverMedia, isVideo } from '../lib/media'
+import { onSale } from '../lib/pricing'
 import type { Product } from '../types'
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -56,9 +57,20 @@ export default function ProductCard({ product }: { product: Product }) {
         </h3>
         <div className="mt-1 flex items-center justify-between">
           {product.show_price !== false ? (
-            <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-              {formatPrice(product.price)}
-            </span>
+            onSale(product) ? (
+              <span className="flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+                  {formatPrice(product.sale_price!)}
+                </span>
+                <span className="text-xs text-night-700/70 line-through dark:text-cream-300/50">
+                  {formatPrice(product.price)}
+                </span>
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+                {formatPrice(product.price)}
+              </span>
+            )
           ) : (
             <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
           )}

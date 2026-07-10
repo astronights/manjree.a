@@ -12,6 +12,7 @@ import type { CatalogFilters } from '../lib/filters'
 import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
 import { emptyFilters } from '../lib/filters'
 import { recordFilterUse } from '../lib/analytics'
+import { smartOrder } from '../lib/order'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
 
@@ -35,7 +36,7 @@ export default function Home() {
   useEffect(() => {
     listProducts()
       .then((list) => {
-        setProducts(list)
+        setProducts(smartOrder(list))
         // Land on New Arrivals when there are any; otherwise on All.
         setCategory((prev) => prev ?? (list.some(isNew) ? NEW_TAB : 'All'))
       })

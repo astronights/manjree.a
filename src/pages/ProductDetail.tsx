@@ -5,6 +5,7 @@ import { getProduct, isNew } from '../lib/store'
 import { recordEvent, recordViewOnce } from '../lib/analytics'
 import { enquiredAt, markEnquired } from '../lib/enquiries'
 import { isVideo } from '../lib/media'
+import { onSale, salePercent } from '../lib/pricing'
 import type { Product } from '../types'
 
 function WhatsAppIcon() {
@@ -132,9 +133,23 @@ export default function ProductDetail() {
       </div>
 
       {product.show_price !== false ? (
-        <p className="mt-2 text-xl font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-          {formatPrice(product.price)}
-        </p>
+        onSale(product) ? (
+          <p className="mt-2 flex flex-wrap items-baseline gap-2">
+            <span className="text-xl font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+              {formatPrice(product.sale_price!)}
+            </span>
+            <span className="text-base text-night-700/70 line-through dark:text-cream-300/60">
+              {formatPrice(product.price)}
+            </span>
+            <span className="rounded-full bg-bougainvillea-500 px-2 py-0.5 text-xs font-semibold text-white">
+              {salePercent(product)}% off
+            </span>
+          </p>
+        ) : (
+          <p className="mt-2 text-xl font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+            {formatPrice(product.price)}
+          </p>
+        )
       ) : (
         <p className="mt-2 text-sm font-medium text-night-700/85 dark:text-cream-300/70">
           Price on request — ask on WhatsApp

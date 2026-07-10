@@ -17,7 +17,7 @@ const AVAILABILITY: [StockStatus | null, string][] = [
 ]
 
 export const SORT_LABELS: [SortOrder, string][] = [
-  ['featured', 'Featured'],
+  ['featured', 'Recommended'],
   ['newest', 'Newest first'],
   ['price_asc', 'Price: low to high'],
   ['price_desc', 'Price: high to low'],

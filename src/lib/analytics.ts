@@ -65,11 +65,16 @@ export function recordFilterUse(kind: FilterKind, value: string): void {
 // Admin only (RLS blocks anonymous reads in Supabase mode).
 export async function fetchEvents(): Promise<AnalyticsEvent[]> {
   if (supabase) {
-    const { data, error } = await supabase
+    let res = await supabase
       .from('events')
       .select('device_id, product_id, event_type, payload, created_at')
-    if (error) throw error
-    return data as AnalyticsEvent[]
+    if (res.error) {
+      // Database not yet migrated to 0006 (no payload column) — the page
+      // still works, just without filter stats.
+      res = await supabase.from('events').select('device_id, product_id, event_type, created_at')
+      if (res.error) throw res.error
+    }
+    return res.data as AnalyticsEvent[]
   }
   return localEvents()
 }

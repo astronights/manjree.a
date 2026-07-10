@@ -24,6 +24,7 @@ export const seedProducts: Product[] = [
     description:
       'Flowy cotton anarkali in a warm marigold shade with delicate gota detailing at the neckline. Perfect for festive daywear.',
     price: 1450,
+    sale_price: null,
     category: 'Kurti',
     sizes: ['38', '40', '42', '44'],
     images: [
@@ -45,6 +46,7 @@ export const seedProducts: Product[] = [
     description:
       'Three-piece chanderi silk suit set — kurta, palazzo and organza dupatta — in bougainvillea pink with zari border.',
     price: 3250,
+    sale_price: null,
     category: 'Kurti Set',
     sizes: ['40', '42', '44'],
     images: [placeholder('Fuchsia Suit Set', '#f8e3ec', '#c2185b')],
@@ -63,6 +65,7 @@ export const seedProducts: Product[] = [
     description:
       'Handloom cotton saree in deep leaf green with a thin marigold border. Lightweight and easy to drape for everyday elegance.',
     price: 2100,
+    sale_price: 1799,
     category: 'Saree',
     sizes: [],
     images: [placeholder('Green Cotton Saree', '#e6efe6', '#2e7d32')],
@@ -81,6 +84,7 @@ export const seedProducts: Product[] = [
     description:
       'Classic Lucknowi chikankari on soft cream mul cotton. Pairs with everything — a wardrobe staple.',
     price: 1150,
+    sale_price: null,
     category: 'Kurti',
     sizes: ['36', '38', '40', '42', '44', '46'],
     images: [placeholder('Chikankari Kurti', '#f2ebdc', '#8a690b')],
@@ -99,6 +103,7 @@ export const seedProducts: Product[] = [
     description:
       'Georgette dupatta in a marigold-to-pink ombre with tassel edging. Instant lift for plain suits.',
     price: 750,
+    sale_price: null,
     category: 'Dupatta',
     sizes: [],
     images: [placeholder('Ombre Dupatta', '#fdf1e0', '#e0447c')],

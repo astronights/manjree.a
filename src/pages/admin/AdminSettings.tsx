@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { defaultCategories, defaultNewArrivalDays, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import { signOut } from '../../lib/store'
 
 // One entry per line; commas also accepted.
 function parseList(text: string): string[] {
@@ -11,6 +12,7 @@ function parseList(text: string): string[] {
 }
 
 export default function AdminSettings() {
+  const navigate = useNavigate()
   const [categoriesText, setCategoriesText] = useState<string | null>(null)
   const [sizesText, setSizesText] = useState('')
   const [daysText, setDaysText] = useState(String(defaultNewArrivalDays))
@@ -136,6 +138,16 @@ export default function AdminSettings() {
             {busy ? 'Saving…' : 'Save settings'}
           </button>
         </div>
+
+        <button
+          onClick={async () => {
+            await signOut()
+            navigate('/')
+          }}
+          className="mx-auto block pt-4 text-sm text-night-700/70 underline dark:text-cream-300/60"
+        >
+          Lock admin panel
+        </button>
       </div>
     </main>
   )

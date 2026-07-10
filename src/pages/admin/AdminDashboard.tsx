@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { formatPrice } from '../../config'
-import { deleteProduct, isNew, listProducts, saveProduct, signOut } from '../../lib/store'
+import { deleteProduct, isNew, listProducts, saveProduct } from '../../lib/store'
 import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
 
@@ -33,37 +33,19 @@ export default function AdminDashboard() {
     navigate(`/admin/edit/${saved.id}`)
   }
 
-  const logout = async () => {
-    await signOut()
-    navigate('/')
-  }
-
   if (!products) {
     return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
-      <div className="flex items-center justify-between pt-5">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Catalog</h1>
-          <p className="text-sm text-night-700/80 dark:text-cream-300/60">
-            {products.length} total · {products.filter((p) => p.is_draft).length} drafts ·{' '}
-            {products.filter((p) => p.stock_status === 'sold_out').length} sold out ·{' '}
-            {products.filter((p) => p.stock_status === 'on_order').length} on order
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link to="/admin/analytics" className="text-base font-medium text-leaf-500 hover:underline">
-            Analytics
-          </Link>
-          <Link to="/admin/settings" className="text-base font-medium text-leaf-500 hover:underline">
-            Settings
-          </Link>
-          <button onClick={logout} className="text-base text-night-700/85 underline dark:text-cream-300/70">
-            Lock
-          </button>
-        </div>
+      <div className="pt-5">
+        <h1 className="font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Catalog</h1>
+        <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+          {products.length} total · {products.filter((p) => p.is_draft).length} drafts ·{' '}
+          {products.filter((p) => p.stock_status === 'sold_out').length} sold out ·{' '}
+          {products.filter((p) => p.stock_status === 'on_order').length} on order
+        </p>
       </div>
 
       <Link
@@ -72,6 +54,21 @@ export default function AdminDashboard() {
       >
         + Add new piece
       </Link>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <Link
+          to="/admin/analytics"
+          className="rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-base font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
+        >
+          📊 Analytics
+        </Link>
+        <Link
+          to="/admin/settings"
+          className="rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-base font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
+        >
+          ⚙️ Settings
+        </Link>
+      </div>
 
       <ul className="mt-5 space-y-3">
         {products.map((p) => (

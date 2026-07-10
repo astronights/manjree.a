@@ -138,6 +138,21 @@ export function summarize(events: AnalyticsEvent[], products: Product[]): Summar
   }
 }
 
+export interface Funnel {
+  devices: number
+  viewers: number
+  enquirers: number
+}
+
+// Visitors → viewed at least one piece → enquired at least once.
+export function computeFunnel(byDevice: DeviceStats[]): Funnel {
+  return {
+    devices: byDevice.length,
+    viewers: byDevice.filter((d) => d.views > 0).length,
+    enquirers: byDevice.filter((d) => d.enquiries > 0).length,
+  }
+}
+
 export interface FilterStat {
   value: string
   count: number

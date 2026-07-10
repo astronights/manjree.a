@@ -11,7 +11,6 @@ export interface CatalogFilters {
   query: string
   sizes: string[]
   availability: StockStatus | null
-  collection: string | null
   sort: SortOrder
 }
 
@@ -19,19 +18,13 @@ export const emptyFilters: CatalogFilters = {
   query: '',
   sizes: [],
   availability: null,
-  collection: null,
   sort: 'featured',
 }
 
 // Badge count for the funnel button (the query is visible in the search box,
 // so it doesn't count).
 export function countActiveFilters(f: CatalogFilters): number {
-  return (
-    (f.sizes.length ? 1 : 0) +
-    (f.availability ? 1 : 0) +
-    (f.collection ? 1 : 0) +
-    (f.sort !== 'featured' ? 1 : 0)
-  )
+  return (f.sizes.length ? 1 : 0) + (f.availability ? 1 : 0) + (f.sort !== 'featured' ? 1 : 0)
 }
 
 export function matchesQuery(p: Product, query: string): boolean {
@@ -49,8 +42,7 @@ export function applyFilters(products: Product[], f: CatalogFilters): Product[] 
       // Free-size pieces (no size list — sarees, dupattas) fit everyone,
       // so they pass any size filter.
       (f.sizes.length === 0 || p.sizes.length === 0 || p.sizes.some((s) => f.sizes.includes(s))) &&
-      (f.availability === null || p.stock_status === f.availability) &&
-      (f.collection === null || p.collection === f.collection),
+      (f.availability === null || p.stock_status === f.availability),
   )
   switch (f.sort) {
     case 'newest':
@@ -72,7 +64,6 @@ export function filtersToParams(f: CatalogFilters, category: string | null): URL
   if (f.query) params.set('q', f.query)
   if (f.sizes.length) params.set('size', f.sizes.join(','))
   if (f.availability) params.set('avail', f.availability)
-  if (f.collection) params.set('coll', f.collection)
   if (f.sort !== 'featured') params.set('sort', f.sort)
   if (category) params.set('cat', category)
   return params
@@ -89,7 +80,6 @@ export function filtersFromParams(params: URLSearchParams): {
       query: params.get('q') ?? '',
       sizes: params.get('size')?.split(',').filter(Boolean) ?? [],
       availability: avail && STATUSES.includes(avail) ? avail : null,
-      collection: params.get('coll'),
       sort: sort && SORTS.includes(sort) ? sort : 'featured',
     },
     category: params.get('cat'),

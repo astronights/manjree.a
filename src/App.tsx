@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import { isSupabaseMode } from './lib/store'
 import Home from './pages/Home'
+import MyPieces from './pages/MyPieces'
 import ProductDetail from './pages/ProductDetail'
 import AdminGuard from './pages/admin/AdminGuard'
 import AdminLogin from './pages/admin/AdminLogin'
@@ -24,6 +25,7 @@ export default function App() {
       )}
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/my-pieces" element={<MyPieces />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<AdminGuard />}>

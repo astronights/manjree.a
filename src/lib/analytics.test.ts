@@ -1,4 +1,4 @@
-import { fetchEvents, recordEvent, recordFilterUse, recordViewOnce, summarize, summarizeFilters } from './analytics'
+import { computeFunnel, fetchEvents, recordEvent, recordFilterUse, recordViewOnce, summarize, summarizeFilters } from './analytics'
 import { getDeviceId } from './device'
 import { seedProducts } from './seed'
 import type { AnalyticsEvent } from '../types'
@@ -60,6 +60,17 @@ describe('summarizeFilters', () => {
     const { totals, byProduct } = summarize(await fetchEvents(), seedProducts)
     expect(totals.views).toBe(1)
     expect(byProduct).toHaveLength(1)
+  })
+})
+
+describe('computeFunnel', () => {
+  it('counts visitors, viewers and enquirers by device', async () => {
+    recordViewOnce('p1')
+    await recordEvent('enquiry', 'p1')
+    recordFilterUse('size', '40') // same device, already a viewer
+    const { byDevice } = summarize(await fetchEvents(), seedProducts)
+    expect(computeFunnel(byDevice)).toEqual({ devices: 1, viewers: 1, enquirers: 1 })
+    expect(computeFunnel([])).toEqual({ devices: 0, viewers: 0, enquirers: 0 })
   })
 })
 

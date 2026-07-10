@@ -7,7 +7,6 @@ interface Props {
   filters: CatalogFilters
   onChange: (patch: Partial<CatalogFilters>) => void
   sizes: string[]
-  collections: string[]
 }
 
 const AVAILABILITY: [StockStatus | null, string][] = [
@@ -23,7 +22,7 @@ export const SORT_LABELS: [SortOrder, string][] = [
   ['price_desc', 'Price: high to low'],
 ]
 
-export default function FilterSheet({ open, onClose, filters, onChange, sizes, collections }: Props) {
+export default function FilterSheet({ open, onClose, filters, onChange, sizes }: Props) {
   if (!open) return null
 
   const chip = (active: boolean) =>
@@ -41,7 +40,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, c
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-night-800 dark:text-cream-100">Filters</h2>
           <button
-            onClick={() => onChange({ sizes: [], availability: null, collection: null, sort: 'featured' })}
+            onClick={() => onChange({ sizes: [], availability: null, sort: 'featured' })}
             className="text-sm text-night-700/80 underline dark:text-cream-300/70"
           >
             Clear all
@@ -97,23 +96,6 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, c
             ))}
           </div>
         </div>
-
-        {collections.length > 0 && (
-          <div className="mt-5">
-            <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Collections</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {collections.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => onChange({ collection: filters.collection === c ? null : c })}
-                  className={chip(filters.collection === c)}
-                >
-                  ✦ {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <button
           onClick={onClose}

@@ -5,29 +5,39 @@ import { listProducts, isNew } from '../lib/store'
 import {
   applyFilters,
   countActiveFilters,
+  emptyFilters,
   filtersFromParams,
   filtersToParams,
 } from '../lib/filters'
 import type { CatalogFilters } from '../lib/filters'
 import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
-import { emptyFilters } from '../lib/filters'
 import { recordFilterUse } from '../lib/analytics'
 import { smartOrder } from '../lib/order'
+import { onSale } from '../lib/pricing'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
 
-// Sentinel tab that filters by "currently new" rather than by category.
-const NEW_TAB = 'New Arrivals'
-
 const AVAILABILITY_LABEL = { in_stock: 'In stock', sold_out: 'Sold out', on_order: 'On order' }
+
+// Highlights are orthogonal to garment type: 'all' | 'new' | 'sale' | 'c:<collection>'.
+function matchesHighlight(p: Product, highlight: string): boolean {
+  if (highlight === 'new') return isNew(p)
+  if (highlight === 'sale') return onSale(p)
+  if (highlight.startsWith('c:')) return p.collection === highlight.slice(2)
+  return true
+}
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const initial = useMemo(() => filtersFromParams(searchParams), [])
+  const initial = useMemo(
+    () => ({ ...filtersFromParams(searchParams), highlight: searchParams.get('hl') ?? 'all' }),
+    [],
+  )
   const [products, setProducts] = useState<Product[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [category, setCategory] = useState<string | null>(initial.category)
+  const [category, setCategory] = useState<string>(initial.category ?? 'All')
+  const [highlight, setHighlight] = useState<string>(initial.highlight)
   const [filters, setFilters] = useState<CatalogFilters>(initial.filters)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [settingsCategories, setSettingsCategories] = useState<string[]>([])
@@ -35,11 +45,7 @@ export default function Home() {
 
   useEffect(() => {
     listProducts()
-      .then((list) => {
-        setProducts(smartOrder(list))
-        // Land on New Arrivals when there are any; otherwise on All.
-        setCategory((prev) => prev ?? (list.some(isNew) ? NEW_TAB : 'All'))
-      })
+      .then((list) => setProducts(smartOrder(list)))
       .catch((e: Error) => setError(e.message))
     getSettings()
       .then((s) => {
@@ -49,38 +55,40 @@ export default function Home() {
       .catch(() => {})
   }, [])
 
-  const hasNew = useMemo(() => (products ?? []).some(isNew), [products])
-  const defaultTab = hasNew ? NEW_TAB : 'All'
-
-  // Keep the URL shareable/refreshable (the default tab is left out of it).
+  // Keep the URL shareable/refreshable (defaults are left out of it).
   useEffect(() => {
-    if (!products || category === null) return
-    setSearchParams(filtersToParams(filters, category === defaultTab ? null : category), {
-      replace: true,
-    })
-  }, [filters, category, products, defaultTab, setSearchParams])
+    if (!products) return
+    const params = filtersToParams(filters, category === 'All' ? null : category)
+    if (highlight !== 'all') params.set('hl', highlight)
+    setSearchParams(params, { replace: true })
+  }, [filters, category, highlight, products, setSearchParams])
 
   const collections = useMemo(
     () => [...new Set((products ?? []).map((p) => p.collection).filter((c): c is string => Boolean(c)))],
     [products],
   )
-  const filtered = useMemo(() => {
-    const inTab = (products ?? []).filter((p) =>
-      category === NEW_TAB ? isNew(p) : category === 'All' || !category || p.category === category,
-    )
-    return applyFilters(inTab, filters)
-  }, [products, category, filters])
-  // New Arrivals (while any exist), then All, then the configured categories
-  // plus any legacy ones still in use on pieces.
-  const categoryChips = useMemo(() => {
+  const hasNew = useMemo(() => (products ?? []).some(isNew), [products])
+  const hasSale = useMemo(() => (products ?? []).some(onSale), [products])
+
+  const highlightOptions = useMemo(() => {
+    const options: [string, string][] = [['all', 'Everything']]
+    if (hasNew) options.push(['new', '✨ New Arrivals'])
+    if (hasSale) options.push(['sale', '🏷️ On Sale'])
+    for (const c of collections) options.push([`c:${c}`, `✦ ${c}`])
+    return options
+  }, [hasNew, hasSale, collections])
+
+  const categoryOptions = useMemo(() => {
     const inUse = [...new Set((products ?? []).map((p) => p.category))]
-    return [
-      ...(hasNew ? [NEW_TAB] : []),
-      'All',
-      ...settingsCategories,
-      ...inUse.filter((c) => !settingsCategories.includes(c)),
-    ]
-  }, [products, settingsCategories, hasNew])
+    return ['All', ...settingsCategories, ...inUse.filter((c) => !settingsCategories.includes(c))]
+  }, [products, settingsCategories])
+
+  const filtered = useMemo(() => {
+    const scoped = (products ?? []).filter(
+      (p) => matchesHighlight(p, highlight) && (category === 'All' || p.category === category),
+    )
+    return applyFilters(scoped, filters)
+  }, [products, highlight, category, filters])
 
   const patchFilters = (patch: Partial<CatalogFilters>) => {
     // Record newly activated filters (never deactivations) for analytics.
@@ -88,14 +96,20 @@ export default function Home() {
       for (const s of patch.sizes.filter((s) => !filters.sizes.includes(s))) recordFilterUse('size', s)
     }
     if (patch.availability) recordFilterUse('availability', patch.availability)
-    if (patch.collection) recordFilterUse('collection', patch.collection)
     if (patch.sort && patch.sort !== 'featured') recordFilterUse('sort', patch.sort)
     setFilters((f) => ({ ...f, ...patch }))
   }
 
-  const pickCategory = (c: string) => {
-    if (c !== 'All') recordFilterUse('category', c)
-    setCategory(c)
+  const pickHighlight = (value: string) => {
+    if (value === 'new') recordFilterUse('category', 'New Arrivals')
+    else if (value === 'sale') recordFilterUse('category', 'On Sale')
+    else if (value.startsWith('c:')) recordFilterUse('collection', value.slice(2))
+    setHighlight(value)
+  }
+
+  const pickCategory = (value: string) => {
+    if (value !== 'All') recordFilterUse('category', value)
+    setCategory(value)
   }
 
   // Record search terms once the customer pauses typing.
@@ -105,8 +119,10 @@ export default function Home() {
     const timer = setTimeout(() => recordFilterUse('search', q), 1200)
     return () => clearTimeout(timer)
   }, [filters.query])
+
   const activeCount = countActiveFilters(filters)
-  const anyNarrowing = activeCount > 0 || filters.query.trim() !== ''
+  const anyNarrowing =
+    activeCount > 0 || filters.query.trim() !== '' || highlight !== 'all' || category !== 'All'
 
   if (error) {
     return <p className="p-8 text-center text-sm text-bougainvillea-500">Could not load the catalog: {error}</p>
@@ -114,6 +130,9 @@ export default function Home() {
   if (!products) {
     return <p className="p-8 text-center text-sm text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
+
+  const selectClass =
+    'w-full min-w-0 rounded-xl border border-cream-300 bg-cream-50 px-3 py-2.5 text-[15px] text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100'
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16">
@@ -147,6 +166,33 @@ export default function Home() {
         </button>
       </div>
 
+      <div className="mt-2.5 grid grid-cols-2 gap-2">
+        <select
+          value={highlight}
+          onChange={(e) => pickHighlight(e.target.value)}
+          aria-label="Highlights"
+          className={selectClass}
+        >
+          {highlightOptions.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={category}
+          onChange={(e) => pickCategory(e.target.value)}
+          aria-label="Garment type"
+          className={selectClass}
+        >
+          {categoryOptions.map((c) => (
+            <option key={c} value={c}>
+              {c === 'All' ? 'All types' : c}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {activeCount > 0 && (
         <div className="no-scrollbar -mx-4 mt-2.5 flex gap-2 overflow-x-auto px-4">
           {filters.sizes.map((s) => (
@@ -166,14 +212,6 @@ export default function Home() {
               {AVAILABILITY_LABEL[filters.availability]} ✕
             </button>
           )}
-          {filters.collection && (
-            <button
-              onClick={() => patchFilters({ collection: null })}
-              className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
-            >
-              ✦ {filters.collection} ✕
-            </button>
-          )}
           {filters.sort !== 'featured' && (
             <button
               onClick={() => patchFilters({ sort: 'featured' })}
@@ -185,42 +223,7 @@ export default function Home() {
         </div>
       )}
 
-      <section className="pt-4">
-        {collections.length > 0 && (
-          <div className="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-1">
-            {collections.map((c) => (
-              <button
-                key={c}
-                onClick={() => patchFilters({ collection: filters.collection === c ? null : c })}
-                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
-                  filters.collection === c
-                    ? 'border-marigold-500 bg-marigold-400 text-night-900'
-                    : 'border-marigold-400/60 bg-marigold-50 text-marigold-700 hover:bg-marigold-100 dark:border-marigold-600 dark:bg-night-800 dark:text-marigold-300'
-                }`}
-              >
-                ✦ {c}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {categoryChips.map((c) => (
-            <button
-              key={c}
-              onClick={() => pickCategory(c)}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
-                category === c
-                  ? 'bg-night-800 text-cream-100 dark:bg-marigold-400 dark:text-night-900'
-                  : c === NEW_TAB
-                    ? 'bg-marigold-100 text-marigold-700 hover:bg-marigold-300 dark:bg-night-800 dark:text-marigold-300 dark:hover:bg-night-700'
-                    : 'bg-cream-200 text-night-700 hover:bg-cream-300 dark:bg-night-800 dark:text-cream-200 dark:hover:bg-night-700'
-              }`}
-            >
-              {c === NEW_TAB ? `✨ ${c}` : c}
-            </button>
-          ))}
-        </div>
-
+      <section>
         {filtered.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-sm text-night-700/80 dark:text-cream-300/60">
@@ -228,7 +231,11 @@ export default function Home() {
             </p>
             {anyNarrowing && (
               <button
-                onClick={() => setFilters(emptyFilters)}
+                onClick={() => {
+                  setFilters(emptyFilters)
+                  setHighlight('all')
+                  setCategory('All')
+                }}
                 className="mt-3 rounded-full bg-marigold-400 px-4 py-1.5 text-sm font-semibold text-night-900 transition hover:bg-marigold-300"
               >
                 Clear search & filters
@@ -250,7 +257,6 @@ export default function Home() {
         filters={filters}
         onChange={patchFilters}
         sizes={settingsSizes}
-        collections={collections}
       />
     </main>
   )

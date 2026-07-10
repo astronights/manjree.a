@@ -11,6 +11,6 @@ describe('App', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText(/Demo mode — sample data only/)).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /New Arrivals/ })).toBeInTheDocument()
+    expect(await screen.findByLabelText('Highlights')).toBeInTheDocument()
   })
 })

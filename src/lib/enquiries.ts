@@ -21,3 +21,7 @@ export function markEnquired(productId: string): void {
 export function enquiredAt(productId: string): string | null {
   return read()[productId] ?? null
 }
+
+export function enquiredIds(): Record<string, string> {
+  return read()
+}

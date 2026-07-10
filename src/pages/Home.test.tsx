@@ -11,44 +11,43 @@ function renderHome() {
 }
 
 async function ready() {
-  return await screen.findByRole('button', { name: /New Arrivals/ })
+  return await screen.findByLabelText('Highlights')
 }
 
 describe('Home', () => {
-  it('defaults to the New Arrivals tab, showing each new piece once', async () => {
+  it('shows everything by default, smart-ordered with sold-out last', async () => {
     renderHome()
     await ready()
-    expect(screen.getAllByText('Marigold Anarkali Kurti')).toHaveLength(1)
-    expect(screen.getByText('Fuchsia Chanderi Suit Set')).toBeInTheDocument()
-    // Non-new pieces stay behind the All tab
-    expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles).toHaveLength(5)
+    expect(titles[0]).toBe('Marigold Anarkali Kurti') // pinned
+    expect(titles[titles.length - 1]).toBe('Cream Chikankari Kurti') // sold out
   })
 
-  it('shows the full catalog under All, with stock bands', async () => {
+  it('highlights dropdown filters new arrivals, sale and collections', async () => {
     renderHome()
     await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'new' } })
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2)
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'sale' } })
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
-    expect(screen.getByText('Sold out')).toBeInTheDocument()
-    expect(screen.getByText('Available on order')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'c:Festive Edit' } })
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2)
   })
 
-  it('shows collection chips and filters by collection', async () => {
+  it('highlight and garment type are orthogonal', async () => {
     renderHome()
     await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
-    fireEvent.click(screen.getByRole('button', { name: '✦ Festive Edit' }))
-    expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
-    expect(screen.getByText('Fuchsia Chanderi Suit Set')).toBeInTheDocument()
-    // Tapping again clears the collection filter
-    fireEvent.click(screen.getByRole('button', { name: '✦ Festive Edit' }))
-    expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'c:Festive Edit' } })
+    fireEvent.change(screen.getByLabelText('Garment type'), { target: { value: 'Kurti Set' } })
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles).toEqual(['Fuchsia Chanderi Suit Set'])
   })
 
-  it('search narrows the grid within the current tab', async () => {
+  it('search narrows the grid', async () => {
     renderHome()
     await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
     fireEvent.change(screen.getByPlaceholderText(/Search kurtis/), { target: { value: 'chikankari' } })
     expect(screen.getByText('Cream Chikankari Kurti')).toBeInTheDocument()
     expect(screen.queryByText('Marigold Anarkali Kurti')).not.toBeInTheDocument()
@@ -57,13 +56,11 @@ describe('Home', () => {
   it('filter sheet: availability filter with clear-all recovery', async () => {
     renderHome()
     await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
     fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.click(screen.getByRole('button', { name: 'On order' }))
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getByText('Sunset Ombre Dupatta')).toBeInTheDocument()
     expect(screen.queryByText('Leaf Green Cotton Saree')).not.toBeInTheDocument()
-    // Dismissible active-filter chip restores the full grid
     fireEvent.click(screen.getByRole('button', { name: /On order ✕/ }))
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
   })
@@ -71,21 +68,10 @@ describe('Home', () => {
   it('size filter keeps free-size pieces visible', async () => {
     renderHome()
     await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
     fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.click(screen.getByRole('button', { name: '38' }))
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument() // free-size
     expect(screen.queryByText('Fuchsia Chanderi Suit Set')).not.toBeInTheDocument() // 40-44
-  })
-
-  it('filters the grid by category', async () => {
-    renderHome()
-    await ready()
-    fireEvent.click(screen.getByRole('button', { name: 'Saree' }))
-    expect(screen.getByText('Leaf Green Cotton Saree')).toBeInTheDocument()
-    expect(screen.queryByText('Cream Chikankari Kurti')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'All' }))
-    expect(screen.getByText('Cream Chikankari Kurti')).toBeInTheDocument()
   })
 })

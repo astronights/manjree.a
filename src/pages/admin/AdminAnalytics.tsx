@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchEvents, summarize, summarizeFilters } from '../../lib/analytics'
+import { computeFunnel, fetchEvents, summarize, summarizeFilters } from '../../lib/analytics'
 import type { FilterStat, Summary } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
 import type { FilterKind } from '../../types'
@@ -53,6 +53,13 @@ export default function AdminAnalytics() {
 
   const { totals, byProduct, byDevice } = data
   const maxViews = Math.max(1, ...byProduct.map((r) => r.views))
+  const funnel = computeFunnel(byDevice)
+  const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0)
+  const funnelRows: [string, number, string][] = [
+    ['Visited the shop', funnel.devices, ''],
+    ['Viewed a piece', funnel.viewers, `${pct(funnel.viewers, funnel.devices)}% of visitors`],
+    ['Enquired on WhatsApp', funnel.enquirers, `${pct(funnel.enquirers, funnel.viewers)}% of viewers`],
+  ]
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -73,6 +80,36 @@ export default function AdminAnalytics() {
         </p>
       ) : (
         <>
+          {funnel.devices > 0 && (
+            <section className="mt-7">
+              <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
+                Funnel
+              </h2>
+              <p className="text-sm text-night-700/80 dark:text-cream-300/60">
+                How far customers get, by device.
+              </p>
+              <div className="mt-3 space-y-2 rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
+                {funnelRows.map(([label, count, share]) => (
+                  <div key={label}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-base text-night-800 dark:text-cream-100">{label}</span>
+                      <span className="shrink-0 text-sm tabular-nums text-night-700/85 dark:text-cream-300/70">
+                        {count}
+                        {share && <span className="ml-1.5 text-night-700/70 dark:text-cream-300/50">· {share}</span>}
+                      </span>
+                    </div>
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-night-700">
+                      <div
+                        className="h-full rounded-full bg-marigold-600"
+                        style={{ width: `${pct(count, funnel.devices)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {byProduct.length > 0 && (
           <section className="mt-7">
             <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
@@ -118,6 +155,7 @@ export default function AdminAnalytics() {
                     </div>
                     <span className="shrink-0 rounded-full bg-cream-200 px-2.5 py-1 text-sm tabular-nums text-night-700 dark:bg-night-700 dark:text-cream-200">
                       {row.enquiries} ✆
+                      {row.views > 0 && ` · ${Math.round((row.enquiries / row.views) * 100)}%`}
                     </span>
                   </div>
                 </li>

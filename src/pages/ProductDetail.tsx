@@ -4,6 +4,8 @@ import { formatPrice, whatsappLink, shop } from '../config'
 import { getProduct, isNew } from '../lib/store'
 import { recordEvent, recordViewOnce } from '../lib/analytics'
 import { enquiredAt, markEnquired } from '../lib/enquiries'
+import { isFavorite, toggleFavorite } from '../lib/favorites'
+import { HeartIcon } from '../components/ProductCard'
 import { isVideo } from '../lib/media'
 import { onSale, salePercent } from '../lib/pricing'
 import type { Product } from '../types'
@@ -22,6 +24,7 @@ export default function ProductDetail() {
   const [imageIndex, setImageIndex] = useState(0)
   const [size, setSize] = useState('')
   const [enquired, setEnquired] = useState<string | null>(() => enquiredAt(id))
+  const [saved, setSaved] = useState(() => isFavorite(id))
 
   useEffect(() => {
     setEnquired(enquiredAt(id))
@@ -120,6 +123,14 @@ export default function ProductDetail() {
             {product.category}
           </p>
         </div>
+        <div className="flex shrink-0 items-center">
+        <button
+          onClick={() => setSaved(toggleFavorite(product.id))}
+          aria-label={saved ? 'Remove from my pieces' : 'Save to my pieces'}
+          className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+        >
+          <HeartIcon filled={saved} />
+        </button>
         <button
           onClick={share}
           aria-label="Share"
@@ -130,6 +141,7 @@ export default function ProductDetail() {
             <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
           </svg>
         </button>
+        </div>
       </div>
 
       {product.show_price !== false ? (

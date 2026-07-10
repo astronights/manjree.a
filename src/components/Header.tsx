@@ -56,6 +56,15 @@ export default function Header() {
           </span>
         </Link>
         <div className="flex items-center gap-1">
+          <Link
+            to="/my-pieces"
+            aria-label="My pieces"
+            className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z" />
+            </svg>
+          </Link>
           <a
             href={`https://wa.me/${shop.whatsappNumber}`}
             target="_blank"

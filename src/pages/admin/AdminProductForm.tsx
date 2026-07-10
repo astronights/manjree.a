@@ -40,6 +40,7 @@ export default function AdminProductForm() {
   const [aiBusy, setAiBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [collections, setCollections] = useState<string[]>([])
+  const [pinnedElsewhere, setPinnedElsewhere] = useState(0)
   const [settings, setSettings] = useState<ShopSettings | null>(null)
   const [saleOn, setSaleOn] = useState(false)
 
@@ -54,9 +55,10 @@ export default function AdminProductForm() {
       // New pieces default to the first configured category.
       if (!id) setForm((f) => (f && !f.category ? { ...f, category: s.categories[0] } : f))
     })
-    listProducts({ includeDrafts: true }).then((all) =>
-      setCollections([...new Set(all.map((p) => p.collection).filter((c): c is string => Boolean(c)))]),
-    )
+    listProducts({ includeDrafts: true }).then((all) => {
+      setCollections([...new Set(all.map((p) => p.collection).filter((c): c is string => Boolean(c)))])
+      setPinnedElsewhere(all.filter((p) => p.pinned && p.id !== id).length)
+    })
   }, [id])
 
   if (!form || !settings) {
@@ -134,6 +136,9 @@ export default function AdminProductForm() {
     if (saleOn && !(Number(form.sale_price) > 0 && Number(form.sale_price) < Number(form.price))) {
       return setError('The sale price must be above zero and below the regular price.')
     }
+    if (form.pinned && pinnedElsewhere >= 5) {
+      return setError('Up to 5 pieces can be pinned — unpin another piece first.')
+    }
     setBusy(true)
     setError(null)
     try {
@@ -155,7 +160,7 @@ export default function AdminProductForm() {
   const toggles: ['is_new_arrival' | 'pinned' | 'show_price', string, string][] = [
     ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
     ['show_price', 'Show price', 'Turn off to show "Price on request" instead'],
-    ['pinned', 'Pin to top', 'Hero piece: always shown first, above new arrivals'],
+    ['pinned', 'Pin to top', 'Hero piece: always shown first, above new arrivals (max 5)'],
   ]
 
   const stockOptions: [Product['stock_status'], string, string][] = [

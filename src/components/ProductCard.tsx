@@ -1,13 +1,34 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatPrice } from '../config'
 import { isNew } from '../lib/store'
 import { enquiredAt } from '../lib/enquiries'
+import { isFavorite, toggleFavorite } from '../lib/favorites'
 import { coverMedia, isVideo } from '../lib/media'
 import { onSale } from '../lib/pricing'
 import type { Product } from '../types'
 
+export function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill={filled ? '#C2185B' : 'none'}
+      stroke={filled ? '#C2185B' : 'currentColor'}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z" />
+    </svg>
+  )
+}
+
 export default function ProductCard({ product }: { product: Product }) {
   const cover = coverMedia(product.images)
+  const fresh = isNew(product)
+  const [saved, setSaved] = useState(() => isFavorite(product.id))
   return (
     <Link
       to={`/product/${product.id}`}
@@ -30,16 +51,30 @@ export default function ProductCard({ product }: { product: Product }) {
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         )}
-        {isNew(product) && (
+        {fresh && (
           <span className="absolute left-2 top-2 rounded-full bg-marigold-400 px-2 py-0.5 text-[11px] font-semibold text-night-900 shadow">
             New
           </span>
         )}
         {enquiredAt(product.id) && (
-          <span className="absolute right-2 top-2 rounded-full bg-leaf-500 px-2 py-0.5 text-[11px] font-medium text-white shadow">
+          <span
+            className={`absolute left-2 rounded-full bg-leaf-500 px-2 py-0.5 text-[11px] font-medium text-white shadow ${
+              fresh ? 'top-9' : 'top-2'
+            }`}
+          >
             ✓ Enquired
           </span>
         )}
+        <button
+          aria-label={saved ? 'Remove from my pieces' : 'Save to my pieces'}
+          onClick={(e) => {
+            e.preventDefault()
+            setSaved(toggleFavorite(product.id))
+          }}
+          className="absolute right-2 top-2 rounded-full bg-cream-50/90 p-1.5 text-night-700 shadow dark:bg-night-900/80 dark:text-cream-200"
+        >
+          <HeartIcon filled={saved} />
+        </button>
         {product.stock_status === 'sold_out' && (
           <span className="absolute inset-x-0 bottom-0 bg-night-900/70 py-1 text-center text-xs font-medium text-cream-100">
             Sold out

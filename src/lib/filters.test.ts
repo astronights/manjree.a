@@ -11,6 +11,14 @@ describe('applyFilters', () => {
     expect(applyFilters(seedProducts, f({ query: 'zzz-nothing' }))).toHaveLength(0)
   })
 
+  it('combines size and availability filters', () => {
+    const result = applyFilters(seedProducts, f({ sizes: ['38'], availability: 'in_stock' }))
+    expect(result.map((p) => p.title)).toEqual([
+      'Marigold Anarkali Kurti',
+      'Leaf Green Cotton Saree',
+    ])
+  })
+
   it('size filters keep free-size pieces (sarees, dupattas)', () => {
     const result = applyFilters(seedProducts, f({ sizes: ['38'] }))
     const titles = result.map((p) => p.title)
@@ -26,10 +34,6 @@ describe('applyFilters', () => {
     )
   })
 
-  it('filters by collection and combines with other filters', () => {
-    const result = applyFilters(seedProducts, f({ collection: 'Festive Edit', sizes: ['38'] }))
-    expect(result.map((p) => p.title)).toEqual(['Marigold Anarkali Kurti'])
-  })
 })
 
 describe('sort orders', () => {
@@ -56,12 +60,13 @@ describe('countActiveFilters', () => {
     expect(countActiveFilters(emptyFilters)).toBe(0)
     expect(countActiveFilters(f({ query: 'x' }))).toBe(0)
     expect(countActiveFilters(f({ sizes: ['38', '40'], availability: 'in_stock' }))).toBe(2)
+    expect(countActiveFilters(f({ sort: 'price_asc' }))).toBe(1)
   })
 })
 
 describe('URL round-trip', () => {
   it('serialises and parses filters and category', () => {
-    const filters = f({ query: 'kurti', sizes: ['38', '40'], availability: 'in_stock', collection: 'Festive Edit' })
+    const filters = f({ query: 'kurti', sizes: ['38', '40'], availability: 'in_stock', sort: 'price_desc' })
     const params = filtersToParams(filters, 'Kurti')
     const parsed = filtersFromParams(params)
     expect(parsed.filters).toEqual(filters)

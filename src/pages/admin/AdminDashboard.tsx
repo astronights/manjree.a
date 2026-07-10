@@ -25,13 +25,14 @@ const SORTERS: Record<AdminSort, (a: Product, b: Product) => number> = {
   title: (a, b) => a.title.localeCompare(b.title),
 }
 
-type StatusFilter = 'all' | 'draft' | 'in_stock' | 'sold_out' | 'on_order'
+type StatusFilter = 'all' | 'draft' | 'pinned' | 'in_stock' | 'sold_out' | 'on_order'
 
 const STATUS_CHIPS: [StatusFilter, string][] = [
   ['all', 'All'],
   ['in_stock', 'In stock'],
   ['on_order', 'On order'],
   ['sold_out', 'Sold out'],
+  ['pinned', 'Pinned'],
   ['draft', 'Drafts'],
 ]
 
@@ -74,7 +75,8 @@ export default function AdminDashboard() {
     .filter(
       (p) =>
         matchesQuery(p, query) &&
-        (status === 'all' || (status === 'draft' ? p.is_draft : p.stock_status === status)),
+        (status === 'all' ||
+          (status === 'draft' ? p.is_draft : status === 'pinned' ? p.pinned : p.stock_status === status)),
     )
     .sort(SORTERS[sort])
 

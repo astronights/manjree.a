@@ -47,26 +47,26 @@ describe('Home', () => {
     expect(titles).toEqual(['Fuchsia Chanderi Suit Set'])
   })
 
-  it('My Pieces highlight shows saved + enquired, saved-unenquired first', async () => {
-    toggleFavorite('demo-dupatta-sunset') // saved, not enquired
-    toggleFavorite('demo-saree-leafgreen') // saved…
-    markEnquired('demo-saree-leafgreen') // …and enquired
-    markEnquired('demo-kurti-cream') // enquired only
+  it('Saved and Enquired highlights show personal lists, most recent first', async () => {
+    toggleFavorite('demo-dupatta-sunset')
+    toggleFavorite('demo-saree-leafgreen')
+    markEnquired('demo-saree-leafgreen')
+    markEnquired('demo-kurti-cream')
     renderHome()
     await ready()
-    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'mine' } })
-    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-    expect(titles).toEqual([
-      'Sunset Ombre Dupatta',
-      'Leaf Green Cotton Saree',
-      'Cream Chikankari Kurti',
-    ])
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'saved' } })
+    let titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles.sort()).toEqual(['Leaf Green Cotton Saree', 'Sunset Ombre Dupatta'])
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'enquired' } })
+    titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles.sort()).toEqual(['Cream Chikankari Kurti', 'Leaf Green Cotton Saree'])
   })
 
-  it('hides the My Pieces option when nothing is saved or enquired', async () => {
+  it('hides the personal options when nothing is saved or enquired', async () => {
     renderHome()
     await ready()
-    expect(screen.queryByRole('option', { name: /My Pieces/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /Saved by me/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /My Enquiries/ })).not.toBeInTheDocument()
   })
 
   it('search narrows the grid', async () => {

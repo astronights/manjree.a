@@ -1,0 +1,109 @@
+import type { CatalogFilters } from '../lib/filters'
+import type { StockStatus } from '../types'
+
+interface Props {
+  open: boolean
+  onClose: () => void
+  filters: CatalogFilters
+  onChange: (patch: Partial<CatalogFilters>) => void
+  sizes: string[]
+  collections: string[]
+}
+
+const AVAILABILITY: [StockStatus | null, string][] = [
+  [null, 'Any'],
+  ['in_stock', 'In stock'],
+  ['on_order', 'On order'],
+]
+
+export default function FilterSheet({ open, onClose, filters, onChange, sizes, collections }: Props) {
+  if (!open) return null
+
+  const chip = (active: boolean) =>
+    `rounded-xl border px-3 py-2 text-base transition ${
+      active
+        ? 'border-marigold-500 bg-marigold-400 font-semibold text-night-900'
+        : 'border-cream-300 bg-cream-100 text-night-700 dark:border-night-600 dark:bg-night-900 dark:text-cream-200'
+    }`
+
+  return (
+    <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Filters">
+      <button aria-label="Close filters" className="absolute inset-0 bg-night-900/50" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-cream-50 p-5 pb-8 dark:bg-night-800">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-cream-300 dark:bg-night-600" />
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-semibold text-night-800 dark:text-cream-100">Filters</h2>
+          <button
+            onClick={() => onChange({ sizes: [], availability: null, collection: null })}
+            className="text-sm text-night-700/80 underline dark:text-cream-300/70"
+          >
+            Clear all
+          </button>
+        </div>
+
+        <div className="mt-4">
+          <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Size</h3>
+          <p className="text-sm text-night-700/80 dark:text-cream-300/60">
+            Free-size pieces (sarees, dupattas) always show.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {sizes.map((s) => (
+              <button
+                key={s}
+                onClick={() =>
+                  onChange({
+                    sizes: filters.sizes.includes(s)
+                      ? filters.sizes.filter((x) => x !== s)
+                      : [...filters.sizes, s],
+                  })
+                }
+                className={`min-w-12 ${chip(filters.sizes.includes(s))}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Availability</h3>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {AVAILABILITY.map(([value, label]) => (
+              <button
+                key={label}
+                onClick={() => onChange({ availability: value })}
+                className={chip(filters.availability === value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {collections.length > 0 && (
+          <div className="mt-5">
+            <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Collections</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {collections.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => onChange({ collection: filters.collection === c ? null : c })}
+                  className={chip(filters.collection === c)}
+                >
+                  ✦ {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          className="mt-6 w-full rounded-xl bg-marigold-400 py-3 font-semibold text-night-900 transition hover:bg-marigold-300"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  )
+}

@@ -2,12 +2,24 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { formatPrice } from '../../config'
 import { deleteProduct, isNew, listProducts, saveProduct } from '../../lib/store'
+import { matchesQuery } from '../../lib/filters'
 import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
+
+type StatusFilter = 'all' | 'draft' | 'sold_out' | 'on_order'
+
+const STATUS_CHIPS: [StatusFilter, string][] = [
+  ['all', 'All'],
+  ['draft', 'Drafts'],
+  ['sold_out', 'Sold out'],
+  ['on_order', 'On order'],
+]
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [products, setProducts] = useState<Product[] | null>(null)
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('all')
 
   const refresh = () => listProducts({ includeDrafts: true }).then(setProducts)
   useEffect(() => {
@@ -36,6 +48,12 @@ export default function AdminDashboard() {
   if (!products) {
     return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
+
+  const visible = products.filter(
+    (p) =>
+      matchesQuery(p, query) &&
+      (status === 'all' || (status === 'draft' ? p.is_draft : p.stock_status === status)),
+  )
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -70,8 +88,37 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <ul className="mt-5 space-y-3">
-        {products.map((p) => (
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search your pieces…"
+        className="mt-4 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-night-800 outline-none focus:border-marigold-500 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
+      />
+      <div className="no-scrollbar -mx-4 mt-2.5 flex gap-2 overflow-x-auto px-4">
+        {STATUS_CHIPS.map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => setStatus(value)}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              status === value
+                ? 'bg-night-800 text-cream-100 dark:bg-marigold-400 dark:text-night-900'
+                : 'bg-cream-200 text-night-700 hover:bg-cream-300 dark:bg-night-800 dark:text-cream-200 dark:hover:bg-night-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {visible.length === 0 && (
+        <p className="py-12 text-center text-base text-night-700/80 dark:text-cream-300/60">
+          No pieces match — try a different search or status.
+        </p>
+      )}
+
+      <ul className="mt-4 space-y-3">
+        {visible.map((p) => (
           <li
             key={p.id}
             className="flex gap-3 rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"

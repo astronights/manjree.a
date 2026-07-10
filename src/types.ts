@@ -24,11 +24,19 @@ export type ProductInput = Omit<Product, 'id' | 'created_at'> & {
   created_at?: string
 }
 
-export type EventType = 'view' | 'enquiry'
+export type EventType = 'view' | 'enquiry' | 'filter'
+
+export type FilterKind = 'search' | 'size' | 'availability' | 'collection' | 'sort' | 'category'
+
+export interface FilterPayload {
+  kind: FilterKind
+  value: string
+}
 
 export interface AnalyticsEvent {
   device_id: string
-  product_id: string
+  product_id: string | null
   event_type: EventType
+  payload?: FilterPayload | null
   created_at: string
 }

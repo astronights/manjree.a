@@ -11,6 +11,7 @@ import {
 import type { CatalogFilters } from '../lib/filters'
 import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
 import { emptyFilters } from '../lib/filters'
+import { recordFilterUse } from '../lib/analytics'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
 
@@ -80,7 +81,29 @@ export default function Home() {
     ]
   }, [products, settingsCategories, hasNew])
 
-  const patchFilters = (patch: Partial<CatalogFilters>) => setFilters((f) => ({ ...f, ...patch }))
+  const patchFilters = (patch: Partial<CatalogFilters>) => {
+    // Record newly activated filters (never deactivations) for analytics.
+    if (patch.sizes) {
+      for (const s of patch.sizes.filter((s) => !filters.sizes.includes(s))) recordFilterUse('size', s)
+    }
+    if (patch.availability) recordFilterUse('availability', patch.availability)
+    if (patch.collection) recordFilterUse('collection', patch.collection)
+    if (patch.sort && patch.sort !== 'featured') recordFilterUse('sort', patch.sort)
+    setFilters((f) => ({ ...f, ...patch }))
+  }
+
+  const pickCategory = (c: string) => {
+    if (c !== 'All') recordFilterUse('category', c)
+    setCategory(c)
+  }
+
+  // Record search terms once the customer pauses typing.
+  useEffect(() => {
+    const q = filters.query.trim()
+    if (q.length < 2) return
+    const timer = setTimeout(() => recordFilterUse('search', q), 1200)
+    return () => clearTimeout(timer)
+  }, [filters.query])
   const activeCount = countActiveFilters(filters)
   const anyNarrowing = activeCount > 0 || filters.query.trim() !== ''
 
@@ -183,7 +206,7 @@ export default function Home() {
           {categoryChips.map((c) => (
             <button
               key={c}
-              onClick={() => setCategory(c)}
+              onClick={() => pickCategory(c)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
                 category === c
                   ? 'bg-night-800 text-cream-100 dark:bg-marigold-400 dark:text-night-900'

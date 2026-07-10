@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchEvents, summarize } from '../../lib/analytics'
-import type { Summary } from '../../lib/analytics'
+import { fetchEvents, summarize, summarizeFilters } from '../../lib/analytics'
+import type { FilterStat, Summary } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
+import type { FilterKind } from '../../types'
+
+const FILTER_KIND_LABELS: [FilterKind, string][] = [
+  ['search', 'Top searches'],
+  ['size', 'Sizes wanted'],
+  ['category', 'Categories browsed'],
+  ['collection', 'Collections opened'],
+  ['availability', 'Availability filters'],
+  ['sort', 'Sort choices'],
+]
 
 function relativeDay(iso: string): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
@@ -22,11 +32,15 @@ function StatTile({ label, value }: { label: string; value: number }) {
 
 export default function AdminAnalytics() {
   const [data, setData] = useState<Summary | null>(null)
+  const [filterStats, setFilterStats] = useState<Map<FilterKind, FilterStat[]>>(new Map())
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([fetchEvents(), listProducts({ includeDrafts: true })])
-      .then(([events, products]) => setData(summarize(events, products)))
+      .then(([events, products]) => {
+        setData(summarize(events, products))
+        setFilterStats(summarizeFilters(events))
+      })
       .catch((e: Error) => setError(e.message))
   }, [])
 
@@ -53,12 +67,13 @@ export default function AdminAnalytics() {
         <StatTile label="Devices" value={totals.devices} />
       </div>
 
-      {byProduct.length === 0 ? (
+      {byProduct.length === 0 && filterStats.size === 0 ? (
         <p className="py-16 text-center text-base text-night-700/80 dark:text-cream-300/60">
           No activity yet — numbers appear as customers browse the catalog.
         </p>
       ) : (
         <>
+          {byProduct.length > 0 && (
           <section className="mt-7">
             <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
               Most viewed pieces
@@ -109,6 +124,40 @@ export default function AdminAnalytics() {
               ))}
             </ul>
           </section>
+          )}
+
+          {filterStats.size > 0 && (
+            <section className="mt-7">
+              <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
+                Popular filters
+              </h2>
+              <p className="text-sm text-night-700/80 dark:text-cream-300/60">
+                What customers search and filter for — each counted once per visit.
+              </p>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {FILTER_KIND_LABELS.filter(([kind]) => filterStats.get(kind)?.length).map(([kind, label]) => (
+                  <div
+                    key={kind}
+                    className="rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"
+                  >
+                    <h3 className="text-sm font-medium text-night-700/85 dark:text-cream-300/70">{label}</h3>
+                    <ul className="mt-2 space-y-1.5">
+                      {filterStats.get(kind)!.map((stat) => (
+                        <li key={stat.value} className="flex items-center justify-between gap-3">
+                          <span className="truncate text-base text-night-800 dark:text-cream-100">
+                            {stat.value}
+                          </span>
+                          <span className="shrink-0 text-sm tabular-nums text-night-700/80 dark:text-cream-300/60">
+                            {stat.count}×
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mt-7">
             <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">

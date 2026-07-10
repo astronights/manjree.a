@@ -1,4 +1,4 @@
-import { fetchEvents, recordEvent, recordViewOnce, summarize } from './analytics'
+import { fetchEvents, recordEvent, recordFilterUse, recordViewOnce, summarize, summarizeFilters } from './analytics'
 import { getDeviceId } from './device'
 import { seedProducts } from './seed'
 import type { AnalyticsEvent } from '../types'
@@ -21,6 +21,45 @@ describe('recordViewOnce', () => {
     recordViewOnce('p1')
     recordViewOnce('p2')
     expect((await fetchEvents()).filter((e) => e.event_type === 'view')).toHaveLength(2)
+  })
+})
+
+describe('recordFilterUse', () => {
+  it('stores the payload and dedupes per value per session', async () => {
+    recordFilterUse('size', '40')
+    recordFilterUse('size', '40')
+    recordFilterUse('size', '42')
+    recordFilterUse('search', '  red kurti  ')
+    recordFilterUse('search', '') // ignored
+    const events = await fetchEvents()
+    const filters = events.filter((e) => e.event_type === 'filter')
+    expect(filters).toHaveLength(3)
+    expect(filters[0]).toMatchObject({ product_id: null, payload: { kind: 'size', value: '40' } })
+    expect(filters[2].payload).toEqual({ kind: 'search', value: 'red kurti' })
+  })
+})
+
+describe('summarizeFilters', () => {
+  it('counts top values per kind', async () => {
+    recordFilterUse('size', '40')
+    recordFilterUse('size', '42')
+    sessionStorage.clear() // simulate a second visit
+    recordFilterUse('size', '40')
+    recordFilterUse('category', 'Saree')
+    const stats = summarizeFilters(await fetchEvents())
+    expect(stats.get('size')).toEqual([
+      { value: '40', count: 2 },
+      { value: '42', count: 1 },
+    ])
+    expect(stats.get('category')).toEqual([{ value: 'Saree', count: 1 }])
+  })
+
+  it('filter events do not distort product or view stats', async () => {
+    recordViewOnce('p1')
+    recordFilterUse('size', '38')
+    const { totals, byProduct } = summarize(await fetchEvents(), seedProducts)
+    expect(totals.views).toBe(1)
+    expect(byProduct).toHaveLength(1)
   })
 })
 

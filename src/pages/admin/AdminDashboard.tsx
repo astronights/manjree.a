@@ -6,13 +6,14 @@ import { matchesQuery } from '../../lib/filters'
 import { coverMedia, isVideo } from '../../lib/media'
 import type { Product } from '../../types'
 
-type StatusFilter = 'all' | 'draft' | 'sold_out' | 'on_order'
+type StatusFilter = 'all' | 'draft' | 'in_stock' | 'sold_out' | 'on_order'
 
 const STATUS_CHIPS: [StatusFilter, string][] = [
   ['all', 'All'],
-  ['draft', 'Drafts'],
-  ['sold_out', 'Sold out'],
+  ['in_stock', 'In stock'],
   ['on_order', 'On order'],
+  ['sold_out', 'Sold out'],
+  ['draft', 'Drafts'],
 ]
 
 export default function AdminDashboard() {

@@ -1,6 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
+import { toggleFavorite } from '../lib/favorites'
+import { markEnquired } from '../lib/enquiries'
 
 function renderHome() {
   return render(
@@ -43,6 +45,28 @@ describe('Home', () => {
     fireEvent.change(screen.getByLabelText('Garment type'), { target: { value: 'Kurti Set' } })
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
     expect(titles).toEqual(['Fuchsia Chanderi Suit Set'])
+  })
+
+  it('My Pieces highlight shows saved + enquired, saved-unenquired first', async () => {
+    toggleFavorite('demo-dupatta-sunset') // saved, not enquired
+    toggleFavorite('demo-saree-leafgreen') // saved…
+    markEnquired('demo-saree-leafgreen') // …and enquired
+    markEnquired('demo-kurti-cream') // enquired only
+    renderHome()
+    await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'mine' } })
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles).toEqual([
+      'Sunset Ombre Dupatta',
+      'Leaf Green Cotton Saree',
+      'Cream Chikankari Kurti',
+    ])
+  })
+
+  it('hides the My Pieces option when nothing is saved or enquired', async () => {
+    renderHome()
+    await ready()
+    expect(screen.queryByRole('option', { name: /My Pieces/ })).not.toBeInTheDocument()
   })
 
   it('search narrows the grid', async () => {

@@ -23,6 +23,8 @@ export function toggleFavorite(productId: string): boolean {
     all[productId] = new Date().toISOString()
   }
   localStorage.setItem(KEY, JSON.stringify(all))
+  // Lets the catalog refresh its "My Pieces" option without a reload.
+  window.dispatchEvent(new Event('manjrees:favorites'))
   return productId in all
 }
 

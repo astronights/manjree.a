@@ -12,6 +12,8 @@ import {
 import type { CatalogFilters } from '../lib/filters'
 import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
 import { recordFilterUse } from '../lib/analytics'
+import { favoriteIds } from '../lib/favorites'
+import { enquiredIds } from '../lib/enquiries'
 import { smartOrder } from '../lib/order'
 import { onSale } from '../lib/pricing'
 import ProductCard from '../components/ProductCard'
@@ -19,10 +21,16 @@ import type { Product } from '../types'
 
 const AVAILABILITY_LABEL = { in_stock: 'In stock', sold_out: 'Sold out', on_order: 'On order' }
 
-// Highlights are orthogonal to garment type: 'all' | 'new' | 'sale' | 'c:<collection>'.
-function matchesHighlight(p: Product, highlight: string): boolean {
+// Highlights are orthogonal to garment type:
+// 'all' | 'new' | 'sale' | 'mine' | 'c:<collection>'.
+function matchesHighlight(
+  p: Product,
+  highlight: string,
+  mine: { favs: Record<string, string>; enq: Record<string, string> },
+): boolean {
   if (highlight === 'new') return isNew(p)
   if (highlight === 'sale') return onSale(p)
+  if (highlight === 'mine') return p.id in mine.favs || p.id in mine.enq
   if (highlight.startsWith('c:')) return p.collection === highlight.slice(2)
   return true
 }
@@ -42,6 +50,16 @@ export default function Home() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [settingsCategories, setSettingsCategories] = useState<string[]>([])
   const [settingsSizes, setSettingsSizes] = useState<string[]>([])
+  const [mineVersion, setMineVersion] = useState(0)
+
+  // Hearting a card updates localStorage; this keeps My Pieces in sync.
+  useEffect(() => {
+    const bump = () => setMineVersion((v) => v + 1)
+    window.addEventListener('manjrees:favorites', bump)
+    return () => window.removeEventListener('manjrees:favorites', bump)
+  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const mine = useMemo(() => ({ favs: favoriteIds(), enq: enquiredIds() }), [mineVersion])
 
   useEffect(() => {
     listProducts()
@@ -75,8 +93,11 @@ export default function Home() {
     if (hasNew) options.push(['new', '✨ New Arrivals'])
     if (hasSale) options.push(['sale', '🏷️ On Sale'])
     for (const c of collections) options.push([`c:${c}`, `✦ ${c}`])
+    if (Object.keys(mine.favs).length || Object.keys(mine.enq).length) {
+      options.push(['mine', '♥ My Pieces'])
+    }
     return options
-  }, [hasNew, hasSale, collections])
+  }, [hasNew, hasSale, collections, mine])
 
   const categoryOptions = useMemo(() => {
     const inUse = [...new Set((products ?? []).map((p) => p.category))]
@@ -85,10 +106,24 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const scoped = (products ?? []).filter(
-      (p) => matchesHighlight(p, highlight) && (category === 'All' || p.category === category),
+      (p) => matchesHighlight(p, highlight, mine) && (category === 'All' || p.category === category),
     )
-    return applyFilters(scoped, filters)
-  }, [products, highlight, category, filters])
+    const result = applyFilters(scoped, filters)
+    if (highlight === 'mine' && filters.sort === 'featured') {
+      // Saved-but-not-yet-enquired first (the open wishes), then saved ones
+      // already enquired about, then enquired-only; recent actions first.
+      const rank = (p: Product) =>
+        p.id in mine.favs && !(p.id in mine.enq) ? 0 : p.id in mine.favs ? 1 : 2
+      return result.sort(
+        (a, b) =>
+          rank(a) - rank(b) ||
+          ((mine.favs[b.id] ?? mine.enq[b.id] ?? '') < (mine.favs[a.id] ?? mine.enq[a.id] ?? '')
+            ? -1
+            : 1),
+      )
+    }
+    return result
+  }, [products, highlight, category, filters, mine])
 
   const patchFilters = (patch: Partial<CatalogFilters>) => {
     // Record newly activated filters (never deactivations) for analytics.
@@ -103,6 +138,7 @@ export default function Home() {
   const pickHighlight = (value: string) => {
     if (value === 'new') recordFilterUse('category', 'New Arrivals')
     else if (value === 'sale') recordFilterUse('category', 'On Sale')
+    else if (value === 'mine') recordFilterUse('category', 'My Pieces')
     else if (value.startsWith('c:')) recordFilterUse('collection', value.slice(2))
     setHighlight(value)
   }

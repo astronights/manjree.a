@@ -32,6 +32,25 @@ describe('applyFilters', () => {
   })
 })
 
+describe('sort orders', () => {
+  it('featured keeps the incoming (pinned-first) order', () => {
+    const result = applyFilters(seedProducts, emptyFilters)
+    expect(result.map((p) => p.id)).toEqual(seedProducts.map((p) => p.id))
+  })
+
+  it('sorts by price both ways', () => {
+    const asc = applyFilters(seedProducts, f({ sort: 'price_asc' })).map((p) => p.price)
+    expect(asc).toEqual([...asc].sort((a, b) => a - b))
+    const desc = applyFilters(seedProducts, f({ sort: 'price_desc' })).map((p) => p.price)
+    expect(desc).toEqual([...desc].sort((a, b) => b - a))
+  })
+
+  it('newest ignores pinning', () => {
+    const newest = applyFilters(seedProducts, f({ sort: 'newest' })).map((p) => p.created_at)
+    expect(newest).toEqual([...newest].sort((a, b) => (a < b ? 1 : -1)))
+  })
+})
+
 describe('countActiveFilters', () => {
   it('counts each active filter group once, ignoring the query', () => {
     expect(countActiveFilters(emptyFilters)).toBe(0)

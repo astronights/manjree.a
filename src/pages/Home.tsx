@@ -9,7 +9,8 @@ import {
   filtersToParams,
 } from '../lib/filters'
 import type { CatalogFilters } from '../lib/filters'
-import FilterSheet from '../components/FilterSheet'
+import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
+import { emptyFilters } from '../lib/filters'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
 
@@ -149,6 +150,14 @@ export default function Home() {
               ✦ {filters.collection} ✕
             </button>
           )}
+          {filters.sort !== 'featured' && (
+            <button
+              onClick={() => patchFilters({ sort: 'featured' })}
+              className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
+            >
+              {SORT_LABELS.find(([v]) => v === filters.sort)?.[1]} ✕
+            </button>
+          )}
         </div>
       )}
 
@@ -195,7 +204,7 @@ export default function Home() {
             </p>
             {anyNarrowing && (
               <button
-                onClick={() => setFilters({ query: '', sizes: [], availability: null, collection: null })}
+                onClick={() => setFilters(emptyFilters)}
                 className="mt-3 rounded-full bg-marigold-400 px-4 py-1.5 text-sm font-semibold text-night-900 transition hover:bg-marigold-300"
               >
                 Clear search & filters

@@ -19,6 +19,14 @@ function MoonIcon() {
   )
 }
 
+function WhatsAppIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.1c-.2.6-1.2 1.2-1.7 1.2-.4.1-1 .1-1.6-.1a13 13 0 0 1-1.5-.5 11.5 11.5 0 0 1-4.4-3.9c-.5-.7-1-1.6-1-2.5 0-.9.4-1.4.6-1.6.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .5.4l.7 1.7c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.1 1.5 1.8 1 .9 1.9 1.2 2.2 1.3.3.1.4.1.6-.1l.7-.8c.2-.3.4-.2.6-.1l1.7.8c.3.1.4.2.5.3 0 .2 0 .5-.2.9z" />
+    </svg>
+  )
+}
+
 function InstagramIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -48,6 +56,15 @@ export default function Header() {
           </span>
         </Link>
         <div className="flex items-center gap-1">
+          <a
+            href={`https://wa.me/${shop.whatsappNumber}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="WhatsApp"
+            className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+          >
+            <WhatsAppIcon />
+          </a>
           <a
             href={shop.instagram}
             target="_blank"

@@ -1,4 +1,4 @@
-import type { CatalogFilters } from '../lib/filters'
+import type { CatalogFilters, SortOrder } from '../lib/filters'
 import type { StockStatus } from '../types'
 
 interface Props {
@@ -14,6 +14,13 @@ const AVAILABILITY: [StockStatus | null, string][] = [
   [null, 'Any'],
   ['in_stock', 'In stock'],
   ['on_order', 'On order'],
+]
+
+export const SORT_LABELS: [SortOrder, string][] = [
+  ['featured', 'Featured'],
+  ['newest', 'Newest first'],
+  ['price_asc', 'Price: low to high'],
+  ['price_desc', 'Price: high to low'],
 ]
 
 export default function FilterSheet({ open, onClose, filters, onChange, sizes, collections }: Props) {
@@ -34,7 +41,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, c
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-night-800 dark:text-cream-100">Filters</h2>
           <button
-            onClick={() => onChange({ sizes: [], availability: null, collection: null })}
+            onClick={() => onChange({ sizes: [], availability: null, collection: null, sort: 'featured' })}
             className="text-sm text-night-700/80 underline dark:text-cream-300/70"
           >
             Clear all
@@ -42,6 +49,17 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, c
         </div>
 
         <div className="mt-4">
+          <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Sort by</h3>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {SORT_LABELS.map(([value, label]) => (
+              <button key={value} onClick={() => onChange({ sort: value })} className={chip(filters.sort === value)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
           <h3 className="text-base font-medium text-night-800 dark:text-cream-100">Size</h3>
           <p className="text-sm text-night-700/80 dark:text-cream-300/60">
             Free-size pieces (sarees, dupattas) always show.

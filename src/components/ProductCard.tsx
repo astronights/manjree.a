@@ -111,7 +111,7 @@ export default function ProductCard({ product }: { product: Product }) {
               <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
             )}
           </span>
-          <span className="min-w-0 truncate text-right text-[11px] text-night-700/80 dark:text-cream-300/60">
+          <span className="min-w-0 text-right text-[11px] text-night-700/80 dark:text-cream-300/60">
             {product.category}
           </span>
         </div>

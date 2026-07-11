@@ -6,6 +6,7 @@
 import { supabase } from './supabase'
 import { getDeviceId } from './device'
 import type { AnalyticsEvent, EventType, FilterKind, FilterPayload, Product } from '../types'
+import type { Engagement } from './ordering'
 
 const LS_EVENTS = 'manjrees.events'
 const MAX_LOCAL_EVENTS = 5000
@@ -44,6 +45,15 @@ export function recordViewOnce(productId: string): void {
   if (sessionStorage.getItem(key)) return
   sessionStorage.setItem(key, '1')
   recordEvent('view', productId).catch(() => {})
+}
+
+// Record a piece being saved (♥). Once per piece per browser session and only
+// on save (not un-save), so trending/engagement isn't inflated by toggling.
+export function recordFavorite(productId: string): void {
+  const key = `manjrees.faved.${productId}`
+  if (sessionStorage.getItem(key)) return
+  sessionStorage.setItem(key, '1')
+  recordEvent('favorite', productId).catch(() => {})
 }
 
 // Record a filter selection (size chosen, search term, category tab, …),
@@ -110,8 +120,9 @@ export function summarize(events: AnalyticsEvent[], products: Product[]): Summar
       byDevice.set(e.device_id, d)
     }
     if (e.created_at > d.lastActive) d.lastActive = e.created_at
-    // Filter events keep the device active but have no product side.
-    if (e.event_type === 'filter' || !e.product_id) continue
+    // Only views and enquiries feed per-product/device counts here; filter and
+    // favorite events keep the device "active" but aren't counted as either.
+    if ((e.event_type !== 'view' && e.event_type !== 'enquiry') || !e.product_id) continue
 
     let p = byProduct.get(e.product_id)
     if (!p) {
@@ -151,6 +162,30 @@ export function computeFunnel(byDevice: DeviceStats[]): Funnel {
     viewers: byDevice.filter((d) => d.views > 0).length,
     enquirers: byDevice.filter((d) => d.enquiries > 0).length,
   }
+}
+
+// Per-product engagement for the Trending order: recent views + weighted
+// enquiries + saves. Supabase mode calls a security-definer RPC that returns
+// only aggregate counts (no device ids); local mode computes from stored
+// events. Weighting: an enquiry (3) > a save (2) > a view (1).
+export async function fetchEngagement(sinceDays = 30): Promise<Engagement> {
+  const score: Engagement = new Map()
+  if (supabase) {
+    const { data, error } = await supabase.rpc('product_engagement', { since_days: sinceDays })
+    if (error || !data) return score
+    for (const r of data as { product_id: string; views: number; enquiries: number; saves: number }[]) {
+      score.set(r.product_id, Number(r.views) + 3 * Number(r.enquiries) + 2 * Number(r.saves))
+    }
+    return score
+  }
+  const cutoff = Date.now() - sinceDays * 86400000
+  const weight: Partial<Record<EventType, number>> = { view: 1, favorite: 2, enquiry: 3 }
+  for (const e of localEvents()) {
+    if (!e.product_id || new Date(e.created_at).getTime() < cutoff) continue
+    const w = weight[e.event_type]
+    if (w) score.set(e.product_id, (score.get(e.product_id) ?? 0) + w)
+  }
+  return score
 }
 
 export interface FilterStat {

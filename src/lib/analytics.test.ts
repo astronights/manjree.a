@@ -1,4 +1,4 @@
-import { computeFunnel, fetchEvents, recordEvent, recordFilterUse, recordViewOnce, summarize, summarizeFilters } from './analytics'
+import { computeFunnel, fetchEngagement, fetchEvents, recordEvent, recordFavorite, recordFilterUse, recordViewOnce, summarize, summarizeFilters } from './analytics'
 import { getDeviceId } from './device'
 import { seedProducts } from './seed'
 import type { AnalyticsEvent } from '../types'
@@ -60,6 +60,34 @@ describe('summarizeFilters', () => {
     const { totals, byProduct } = summarize(await fetchEvents(), seedProducts)
     expect(totals.views).toBe(1)
     expect(byProduct).toHaveLength(1)
+  })
+})
+
+describe('favourites & engagement', () => {
+  it('records a favourite once per piece per session', async () => {
+    recordFavorite('p1')
+    recordFavorite('p1')
+    recordFavorite('p2')
+    const favs = (await fetchEvents()).filter((e) => e.event_type === 'favorite')
+    expect(favs.map((e) => e.product_id)).toEqual(['p1', 'p2'])
+  })
+
+  it('favourite events do not inflate product view/enquiry stats', async () => {
+    recordViewOnce('p1')
+    recordFavorite('p1')
+    const { byProduct } = summarize(await fetchEvents(), seedProducts)
+    expect(byProduct).toHaveLength(1)
+    expect(byProduct[0]).toMatchObject({ views: 1, enquiries: 0 })
+  })
+
+  it('scores engagement as views + 3·enquiries + 2·saves', async () => {
+    recordViewOnce('p1') // +1
+    await recordEvent('enquiry', 'p1') // +3
+    recordFavorite('p1') // +2
+    recordViewOnce('p2') // +1
+    const score = await fetchEngagement()
+    expect(score.get('p1')).toBe(6)
+    expect(score.get('p2')).toBe(1)
   })
 })
 

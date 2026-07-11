@@ -3,6 +3,8 @@
 // demo mode); missing or invalid values fall back to these defaults.
 
 import { supabase } from './supabase'
+import { defaultOrdering, sanitizeOrdering } from './ordering'
+import type { OrderingConfig } from './ordering'
 
 export const defaultCategories = [
   'Kurti',
@@ -25,6 +27,16 @@ export interface ShopSettings {
   categories: string[]
   sizes: string[]
   new_arrival_days: number
+  ordering: OrderingConfig
+}
+
+export { defaultOrdering }
+
+type SettingsInput = {
+  categories?: unknown
+  sizes?: unknown
+  new_arrival_days?: unknown
+  ordering?: unknown
 }
 
 const LS_KEY = 'manjrees.settings'
@@ -40,15 +52,12 @@ function sanitizeDays(value: unknown): number {
   return Number.isFinite(n) && n >= 1 && n <= 60 ? n : defaultNewArrivalDays
 }
 
-function withDefaults(raw: {
-  categories?: unknown
-  sizes?: unknown
-  new_arrival_days?: unknown
-}): ShopSettings {
+function withDefaults(raw: SettingsInput): ShopSettings {
   return {
     categories: sanitizeList(raw.categories, defaultCategories),
     sizes: sanitizeList(raw.sizes, defaultSizes),
     new_arrival_days: sanitizeDays(raw.new_arrival_days),
+    ordering: sanitizeOrdering(raw.ordering),
   }
 }
 
@@ -65,7 +74,7 @@ export async function getSettings(): Promise<ShopSettings> {
   }
 }
 
-export async function saveSettings(settings: ShopSettings): Promise<ShopSettings> {
+export async function saveSettings(settings: SettingsInput): Promise<ShopSettings> {
   const clean = withDefaults(settings)
   if (supabase) {
     const rows = Object.entries(clean).map(([key, value]) => ({

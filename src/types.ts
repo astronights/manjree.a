@@ -24,7 +24,7 @@ export type ProductInput = Omit<Product, 'id' | 'created_at'> & {
   created_at?: string
 }
 
-export type EventType = 'view' | 'enquiry' | 'filter'
+export type EventType = 'view' | 'enquiry' | 'filter' | 'favorite'
 
 export type FilterKind = 'search' | 'size' | 'availability' | 'collection' | 'sort' | 'category'
 

@@ -8,6 +8,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProductForm from './pages/admin/AdminProductForm'
 import AdminAnalytics from './pages/admin/AdminAnalytics'
+import AdminOrdering from './pages/admin/AdminOrdering'
 import AdminSettings from './pages/admin/AdminSettings'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
         <Route element={<AdminGuard />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/ordering" element={<AdminOrdering />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/new" element={<AdminProductForm />} />
           <Route path="/admin/edit/:id" element={<AdminProductForm />} />

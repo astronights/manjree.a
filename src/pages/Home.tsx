@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getSettings } from '../lib/settings'
+import { getSettings, defaultOrdering } from '../lib/settings'
 import { listProducts, isNew } from '../lib/store'
 import {
   applyFilters,
@@ -11,10 +11,12 @@ import {
 } from '../lib/filters'
 import type { CatalogFilters } from '../lib/filters'
 import FilterSheet, { SORT_LABELS } from '../components/FilterSheet'
-import { recordFilterUse } from '../lib/analytics'
+import { fetchEngagement, recordFilterUse } from '../lib/analytics'
 import { favoriteIds } from '../lib/favorites'
 import { enquiredIds } from '../lib/enquiries'
-import { smartOrder } from '../lib/order'
+import { orderProducts } from '../lib/order'
+import { resolveStrategy } from '../lib/ordering'
+import type { Engagement, OrderingConfig } from '../lib/ordering'
 import { onSale } from '../lib/pricing'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
@@ -69,6 +71,8 @@ export default function Home() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [settingsCategories, setSettingsCategories] = useState<string[]>([])
   const [settingsSizes, setSettingsSizes] = useState<string[]>([])
+  const [ordering, setOrdering] = useState<OrderingConfig>(defaultOrdering)
+  const [engagement, setEngagement] = useState<Engagement>()
   const [mineVersion, setMineVersion] = useState(0)
 
   // Hearting a card updates localStorage; this keeps My Pieces in sync.
@@ -83,7 +87,7 @@ export default function Home() {
   useEffect(() => {
     listProducts()
       .then((list) => {
-        setProducts(smartOrder(list))
+        setProducts(list)
         // Default to New Arrivals when there are any and the URL didn't ask
         // for a specific highlight; fall back to Everything otherwise.
         if (!searchParams.get('hl')) setHighlight(list.some(isNew) ? 'new' : 'all')
@@ -93,6 +97,15 @@ export default function Home() {
       .then((s) => {
         setSettingsCategories(s.categories)
         setSettingsSizes(s.sizes)
+        setOrdering(s.ordering)
+        // Only pay for the engagement query when a Trending order is configured.
+        const usesTrending = [
+          s.ordering.default,
+          ...Object.values(s.ordering.byHighlight),
+          ...Object.values(s.ordering.byCollection),
+          ...Object.values(s.ordering.byCategory),
+        ].includes('trending')
+        if (usesTrending) fetchEngagement().then(setEngagement).catch(() => {})
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,14 +153,24 @@ export default function Home() {
     const scoped = (products ?? []).filter(
       (p) => matchesHighlight(p, highlight, mine) && (category === 'All' || p.category === category),
     )
+    // applyFilters sorts when the customer picked an explicit sort; for the
+    // default "Recommended" (featured) it leaves order to us below.
     const result = applyFilters(scoped, filters)
+    if (filters.sort !== 'featured') return result
+
     // Personal lists order by when the customer acted, most recent first.
-    if (filters.sort === 'featured' && (highlight === 'saved' || highlight === 'enquired')) {
+    if (highlight === 'saved' || highlight === 'enquired') {
       const stamps = highlight === 'saved' ? mine.favs : mine.enq
-      return result.sort((a, b) => ((stamps[b.id] ?? '') < (stamps[a.id] ?? '') ? -1 : 1))
+      return [...result].sort((a, b) => ((stamps[b.id] ?? '') < (stamps[a.id] ?? '') ? -1 : 1))
     }
-    return result
-  }, [products, highlight, category, filters, mine])
+    // Otherwise apply the admin-resolved strategy (Model B precedence).
+    const strategy = resolveStrategy(ordering, {
+      collection: highlight.startsWith('c:') ? highlight.slice(2) : null,
+      highlight: highlight === 'new' || highlight === 'sale' ? highlight : null,
+      category: category === 'All' ? null : category,
+    })
+    return orderProducts(result, strategy, engagement)
+  }, [products, highlight, category, filters, mine, ordering, engagement])
 
   const patchFilters = (patch: Partial<CatalogFilters>) => {
     // Record newly activated filters (never deactivations) for analytics.

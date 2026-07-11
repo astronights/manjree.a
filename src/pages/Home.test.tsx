@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
 import { toggleFavorite } from '../lib/favorites'
 import { markEnquired } from '../lib/enquiries'
+import { saveSettings } from '../lib/settings'
 
 function renderHome() {
   return render(
@@ -88,6 +89,32 @@ describe('Home', () => {
     await ready()
     expect(screen.queryByRole('option', { name: /Saved by me/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /My Enquiries/ })).not.toBeInTheDocument()
+  })
+
+  it('applies the admin default ordering to the Everything view', async () => {
+    await saveSettings({ ordering: { default: 'price_asc', byHighlight: {}, byCollection: {}, byCategory: {} } })
+    renderHome()
+    await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    // Cheapest in-stock first (₹750 dupatta), sold-out chikankari last
+    expect(titles[0]).toBe('Sunset Ombre Dupatta')
+    expect(titles[titles.length - 1]).toBe('Cream Chikankari Kurti')
+  })
+
+  it('a category ordering override beats the default', async () => {
+    await saveSettings({
+      ordering: { default: 'smart', byHighlight: {}, byCollection: {}, byCategory: { Kurti: 'price_desc' } },
+    })
+    renderHome()
+    await ready()
+    fireEvent.change(screen.getByLabelText('Garment type'), { target: { value: 'Kurti' } })
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    // Two in-stock/new kurti… wait, only Marigold(1450) in-stock + Cream(1150, sold out)
+    // price_desc among in-stock puts Marigold first, sold-out Cream last
+    expect(titles[0]).toBe('Marigold Anarkali Kurti')
+    expect(titles[titles.length - 1]).toBe('Cream Chikankari Kurti')
   })
 
   it('search narrows the grid', async () => {

@@ -90,28 +90,30 @@ export default function ProductCard({ product }: { product: Product }) {
         <h3 className="truncate font-display text-sm font-semibold text-night-800 dark:text-cream-100">
           {product.title}
         </h3>
-        <p className="mt-0.5 truncate text-[11px] text-night-700/80 dark:text-cream-300/60">
-          {product.category}
-        </p>
-        <div className="mt-1">
-          {product.show_price !== false ? (
-            onSale(product) ? (
-              <span className="flex items-baseline gap-1.5">
-                <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-                  {formatPrice(product.sale_price!)}
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="shrink-0">
+            {product.show_price !== false ? (
+              onSale(product) ? (
+                <span className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
+                    {formatPrice(product.sale_price!)}
+                  </span>
+                  <span className="text-xs text-night-700/70 line-through dark:text-cream-300/50">
+                    {formatPrice(product.price)}
+                  </span>
                 </span>
-                <span className="text-xs text-night-700/70 line-through dark:text-cream-300/50">
+              ) : (
+                <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
                   {formatPrice(product.price)}
                 </span>
-              </span>
+              )
             ) : (
-              <span className="text-sm font-semibold text-bougainvillea-500 dark:text-bougainvillea-400">
-                {formatPrice(product.price)}
-              </span>
-            )
-          ) : (
-            <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
-          )}
+              <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
+            )}
+          </span>
+          <span className="min-w-0 truncate text-right text-[11px] text-night-700/80 dark:text-cream-300/60">
+            {product.category}
+          </span>
         </div>
       </div>
     </Link>

@@ -22,10 +22,9 @@ export function newUntilFromNow(days: number = defaultNewArrivalDays): string {
 }
 
 function sortProducts(list: Product[]): Product[] {
-  return [...list].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
+  return [...list].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
 }
 
 // ---------------------------------------------------------------- local mode

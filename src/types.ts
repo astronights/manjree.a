@@ -13,7 +13,6 @@ export interface Product {
   new_until: string | null
   stock_status: StockStatus
   is_draft: boolean
-  pinned: boolean
   show_price: boolean
   collection: string | null
   created_at: string

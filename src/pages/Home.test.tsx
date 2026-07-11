@@ -22,7 +22,7 @@ describe('Home', () => {
     await ready()
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
     expect(titles).toHaveLength(5)
-    expect(titles[0]).toBe('Marigold Anarkali Kurti') // pinned
+    expect(titles[0]).toBe('Marigold Anarkali Kurti') // newest new arrival
     expect(titles[titles.length - 1]).toBe('Cream Chikankari Kurti') // sold out
   })
 

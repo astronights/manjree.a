@@ -14,7 +14,6 @@ const base: Omit<Product, 'id' | 'created_at'> = {
   new_until: null,
   stock_status: 'in_stock' as const,
   is_draft: false,
-  pinned: false,
   show_price: true,
   collection: null,
 }
@@ -49,12 +48,9 @@ describe('local product store', () => {
     expect(adminIds).toContain(draft.id)
   })
 
-  it('sorts pinned pieces first, then newest first', async () => {
+  it('sorts newest first', async () => {
     const products = await listProducts()
-    const firstUnpinned = products.findIndex((p) => !p.pinned)
-    expect(products.slice(0, firstUnpinned).every((p) => p.pinned)).toBe(true)
-    const rest = products.slice(firstUnpinned)
-    const times = rest.map((p) => new Date(p.created_at).getTime())
+    const times = products.map((p) => new Date(p.created_at).getTime())
     expect(times).toEqual([...times].sort((a, b) => b - a))
   })
 

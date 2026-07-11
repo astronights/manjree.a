@@ -9,7 +9,6 @@ function piece(patch: Partial<Product>): Product {
   return {
     ...seedProducts[2], // plain in-stock piece as the base
     id: crypto.randomUUID(),
-    pinned: false,
     is_new_arrival: false,
     new_until: null,
     sale_price: null,
@@ -33,16 +32,15 @@ describe('onSale / salePercent', () => {
 })
 
 describe('smartOrder', () => {
-  it('bands: pinned, new, sale, rest, sold-out last — newest first within bands', () => {
+  it('bands: new, sale, rest, sold-out last — newest first within bands', () => {
     const soldOut = piece({ title: 'sold', stock_status: 'sold_out', created_at: days(0) })
     const plainOld = piece({ title: 'plain-old', created_at: days(9) })
     const plainNew = piece({ title: 'plain-new', created_at: days(1) })
     const sale = piece({ title: 'sale', price: 1000, sale_price: 700, created_at: days(8) })
     const fresh = piece({ title: 'new', is_new_arrival: true, new_until: days(-2), created_at: days(7) })
-    const pinned = piece({ title: 'pinned', pinned: true, stock_status: 'sold_out', created_at: days(20) })
 
-    const order = smartOrder([soldOut, plainOld, plainNew, sale, fresh, pinned]).map((p) => p.title)
-    expect(order).toEqual(['pinned', 'new', 'sale', 'plain-new', 'plain-old', 'sold'])
+    const order = smartOrder([soldOut, plainOld, plainNew, sale, fresh]).map((p) => p.title)
+    expect(order).toEqual(['new', 'sale', 'plain-new', 'plain-old', 'sold'])
   })
 
   it('a new arrival that is also on sale ranks in the new band', () => {

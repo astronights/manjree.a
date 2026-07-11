@@ -27,7 +27,6 @@ const blank: ProductForm = {
   stock_status: 'in_stock',
   sale_price: null,
   is_draft: false,
-  pinned: false,
   show_price: true,
   collection: null,
 }
@@ -40,9 +39,10 @@ export default function AdminProductForm() {
   const [aiBusy, setAiBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [collections, setCollections] = useState<string[]>([])
-  const [pinnedElsewhere, setPinnedElsewhere] = useState(0)
   const [settings, setSettings] = useState<ShopSettings | null>(null)
   const [saleOn, setSaleOn] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null)
 
   useEffect(() => {
     if (id)
@@ -55,10 +55,9 @@ export default function AdminProductForm() {
       // New pieces default to the first configured category.
       if (!id) setForm((f) => (f && !f.category ? { ...f, category: s.categories[0] } : f))
     })
-    listProducts({ includeDrafts: true }).then((all) => {
-      setCollections([...new Set(all.map((p) => p.collection).filter((c): c is string => Boolean(c)))])
-      setPinnedElsewhere(all.filter((p) => p.pinned && p.id !== id).length)
-    })
+    listProducts({ includeDrafts: true }).then((all) =>
+      setCollections([...new Set(all.map((p) => p.collection).filter((c): c is string => Boolean(c)))]),
+    )
   }, [id])
 
   if (!form || !settings) {
@@ -93,12 +92,40 @@ export default function AdminProductForm() {
 
   const removePhoto = (i: number) => set({ images: form.images.filter((_, j) => j !== i) })
 
-  const movePhoto = (i: number, dir: -1 | 1) => {
-    const imgs = [...form.images]
-    const j = i + dir
-    if (j < 0 || j >= imgs.length) return
-    ;[imgs[i], imgs[j]] = [imgs[j], imgs[i]]
-    set({ images: imgs })
+  // Touch-friendly reorder: the grip bar captures the pointer; while it moves
+  // over another thumbnail (found via elementFromPoint), the item hops there.
+  const startDrag = (index: number) => (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    let from = index
+    setDraggingIdx(index)
+    const onMove = (ev: PointerEvent) => {
+      const over = document
+        .elementFromPoint(ev.clientX, ev.clientY)
+        ?.closest('[data-media-idx]') as HTMLElement | null
+      if (!over) return
+      const to = Number(over.dataset.mediaIdx)
+      if (Number.isNaN(to) || to === from) return
+      // Snapshot before queueing: React runs the updater later, after `from`
+      // has already been advanced for the next move event.
+      const fromIdx = from
+      setForm((f) => {
+        const imgs = [...f!.images]
+        const [moved] = imgs.splice(fromIdx, 1)
+        imgs.splice(to, 0, moved)
+        return { ...f!, images: imgs }
+      })
+      from = to
+      setDraggingIdx(to)
+    }
+    const onUp = () => {
+      el.removeEventListener('pointermove', onMove)
+      setDraggingIdx(null)
+    }
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp, { once: true })
+    el.addEventListener('pointercancel', onUp, { once: true })
   }
 
   const toggleSize = (s: string) =>
@@ -136,9 +163,6 @@ export default function AdminProductForm() {
     if (saleOn && !(Number(form.sale_price) > 0 && Number(form.sale_price) < Number(form.price))) {
       return setError('The sale price must be above zero and below the regular price.')
     }
-    if (form.pinned && pinnedElsewhere >= 5) {
-      return setError('Up to 5 pieces can be pinned — unpin another piece first.')
-    }
     setBusy(true)
     setError(null)
     try {
@@ -157,10 +181,9 @@ export default function AdminProductForm() {
     }
   }
 
-  const toggles: ['is_new_arrival' | 'pinned' | 'show_price', string, string][] = [
+  const toggles: ['is_new_arrival' | 'show_price', string, string][] = [
     ['is_new_arrival', 'Mark as New Arrival', 'Shows a "New" badge and features it on top (auto-expires)'],
     ['show_price', 'Show price', 'Turn off to show "Price on request" instead'],
-    ['pinned', 'Pin to top', 'Hero piece: always shown first, above new arrivals (max 5)'],
   ]
 
   const stockOptions: [Product['stock_status'], string, string][] = [
@@ -184,41 +207,74 @@ export default function AdminProductForm() {
 
       <div className="mt-5 space-y-5">
         <div>
-          <label className={labelClass}>Photos</label>
+          <label className={labelClass}>Photos & videos</label>
           <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
             {form.images.map((src, i) => (
-              <div key={i} className="group relative aspect-[4/5] overflow-hidden rounded-xl bg-cream-200 dark:bg-night-700">
-                {isVideo(src) ? (
-                  <video src={src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                ) : (
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                )}
+              <div
+                key={src}
+                data-media-idx={i}
+                className={`group relative aspect-[4/5] overflow-hidden rounded-xl bg-cream-200 dark:bg-night-700 ${
+                  draggingIdx === i ? 'z-10 opacity-70 ring-2 ring-marigold-500' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPreview(src)}
+                  aria-label={`Preview item ${i + 1}`}
+                  className="block h-full w-full"
+                >
+                  {isVideo(src) ? (
+                    <video src={src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                  ) : (
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                  )}
+                </button>
                 {isVideo(src) && (
-                  <span className="absolute right-1 top-1 rounded bg-night-900/70 px-1.5 text-xs font-medium text-cream-100">
-                    ▶ Video
+                  <span className="pointer-events-none absolute left-1 bottom-1 rounded bg-night-900/70 px-1.5 text-xs font-medium text-cream-100">
+                    ▶
                   </span>
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-night-900/60 py-1 text-cream-100">
-                  <button onClick={() => movePhoto(i, -1)} aria-label="Move left" className="px-1.5">‹</button>
-                  <button onClick={() => removePhoto(i)} aria-label="Remove photo" className="px-1.5">✕</button>
-                  <button onClick={() => movePhoto(i, 1)} aria-label="Move right" className="px-1.5">›</button>
-                </div>
                 {i === 0 && (
-                  <span className="absolute left-1 top-1 rounded bg-marigold-400 px-1.5 text-xs font-semibold text-night-900">
+                  <span className="pointer-events-none absolute left-1 top-1 rounded bg-marigold-400 px-1.5 text-xs font-semibold text-night-900">
                     Cover
                   </span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  aria-label="Remove"
+                  className="absolute right-1 top-1 rounded-full bg-night-900/70 px-1.5 py-0.5 text-xs text-cream-100"
+                >
+                  ✕
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={startDrag(i)}
+                  aria-label={`Drag to reorder item ${i + 1}`}
+                  className="absolute inset-x-0 bottom-0 flex h-7 cursor-grab touch-none items-center justify-center bg-night-900/50 text-cream-100 active:cursor-grabbing"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="8" cy="7" r="1.6" /><circle cx="16" cy="7" r="1.6" />
+                    <circle cx="8" cy="12" r="1.6" /><circle cx="16" cy="12" r="1.6" />
+                    <circle cx="8" cy="17" r="1.6" /><circle cx="16" cy="17" r="1.6" />
+                  </svg>
+                </button>
               </div>
             ))}
             <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-cream-300 text-night-700/80 transition hover:border-marigold-400 dark:border-night-700 dark:text-cream-300/60">
               <span className="text-2xl">+</span>
-              <span className="px-1 text-center text-sm">Add photos / videos</span>
-              <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={addPhotos} />
+              <span className="px-1 text-center text-sm">{busy ? 'Uploading…' : 'Add photos'}</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={addPhotos} disabled={busy} />
+            </label>
+            <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-cream-300 text-night-700/80 transition hover:border-marigold-400 dark:border-night-700 dark:text-cream-300/60">
+              <span className="text-2xl">🎬</span>
+              <span className="px-1 text-center text-sm">{busy ? 'Uploading…' : 'Add video'}</span>
+              <input type="file" accept="video/*" multiple className="hidden" onChange={addPhotos} disabled={busy} />
             </label>
           </div>
           <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
-            Select several at once (front, back, fabric close-up, a short video). The first item is
-            the cover — photos make the best covers.
+            Tap a photo to preview it. Hold the dotted bar and drag to change the order — the first
+            item is the cover (photos make the best covers). Videos up to 50 MB.
           </p>
         </div>
 
@@ -428,6 +484,36 @@ export default function AdminProductForm() {
           </button>
         </div>
       </div>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night-900/85 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Media preview"
+          onClick={() => setPreview(null)}
+        >
+          {isVideo(preview) ? (
+            <video
+              src={preview}
+              controls
+              autoPlay
+              playsInline
+              className="max-h-full max-w-full rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img src={preview} alt="Preview" className="max-h-full max-w-full rounded-xl" />
+          )}
+          <button
+            onClick={() => setPreview(null)}
+            aria-label="Close preview"
+            className="absolute right-4 top-4 rounded-full bg-cream-50/90 px-3 py-1.5 text-lg text-night-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </main>
   )
 }

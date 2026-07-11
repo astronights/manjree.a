@@ -7,14 +7,13 @@ import { coverMedia, isVideo } from '../../lib/media'
 import { onSale } from '../../lib/pricing'
 import type { Product } from '../../types'
 
-type StatusFilter = 'all' | 'draft' | 'pinned' | 'in_stock' | 'sold_out' | 'on_order'
+type StatusFilter = 'all' | 'draft' | 'in_stock' | 'sold_out' | 'on_order'
 
 const STATUS_CHIPS: [StatusFilter, string][] = [
   ['all', 'All'],
   ['in_stock', 'In stock'],
   ['on_order', 'On order'],
   ['sold_out', 'Sold out'],
-  ['pinned', 'Pinned'],
   ['draft', 'Drafts'],
 ]
 
@@ -42,7 +41,6 @@ export default function AdminDashboard() {
       created_at: undefined,
       title: `${product.title} (copy)`,
       is_draft: true,
-      pinned: false,
     }
     const saved = await saveProduct(copy)
     navigate(`/admin/edit/${saved.id}`)
@@ -55,8 +53,7 @@ export default function AdminDashboard() {
   const visible = products.filter(
     (p) =>
       matchesQuery(p, query) &&
-      (status === 'all' ||
-        (status === 'draft' ? p.is_draft : status === 'pinned' ? p.pinned : p.stock_status === status)),
+      (status === 'all' || (status === 'draft' ? p.is_draft : p.stock_status === status)),
   )
 
   return (
@@ -163,11 +160,6 @@ export default function AdminDashboard() {
                 {onSale(p) && (
                   <span className="rounded-full border border-bougainvillea-500 px-2 py-0.5 text-xs font-medium text-bougainvillea-500">
                     Sale
-                  </span>
-                )}
-                {p.pinned && (
-                  <span className="rounded-full bg-leaf-500 px-2 py-0.5 text-xs font-medium text-white">
-                    Pinned
                   </span>
                 )}
               </div>

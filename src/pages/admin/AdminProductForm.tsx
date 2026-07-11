@@ -92,15 +92,50 @@ export default function AdminProductForm() {
 
   const removePhoto = (i: number) => set({ images: form.images.filter((_, j) => j !== i) })
 
-  // Touch-friendly reorder: the grip bar captures the pointer; while it moves
-  // over another thumbnail (found via elementFromPoint), the item hops there.
-  const startDrag = (index: number) => (e: React.PointerEvent<HTMLButtonElement>) => {
-    e.preventDefault()
+  // Long-press-to-drag reorder (the home-screen-apps pattern): hold a tile
+  // ~350ms and it lifts, then follows the finger; a short tap previews and a
+  // quick swipe still scrolls the page. Works via pointer events; while a
+  // drag is active a non-passive touchmove blocker stops native scrolling.
+  const startPress = (index: number) => (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
     const el = e.currentTarget
-    el.setPointerCapture(e.pointerId)
+    const pointerId = e.pointerId
+    const startX = e.clientX
+    const startY = e.clientY
+    let active = false
     let from = index
-    setDraggingIdx(index)
+
+    const blockScroll = (ev: TouchEvent) => {
+      if (active) ev.preventDefault()
+    }
+    el.addEventListener('touchmove', blockScroll, { passive: false })
+
+    const timer = window.setTimeout(() => {
+      active = true
+      try {
+        el.setPointerCapture(pointerId)
+      } catch {
+        /* pointer already gone */
+      }
+      setDraggingIdx(index)
+      navigator.vibrate?.(30)
+    }, 350)
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      el.removeEventListener('touchmove', blockScroll)
+      setDraggingIdx(null)
+    }
+
     const onMove = (ev: PointerEvent) => {
+      if (!active) {
+        // Moved before the hold completed: it's a scroll or sloppy tap.
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > 10) cleanup()
+        return
+      }
       const over = document
         .elementFromPoint(ev.clientX, ev.clientY)
         ?.closest('[data-media-idx]') as HTMLElement | null
@@ -119,13 +154,25 @@ export default function AdminProductForm() {
       from = to
       setDraggingIdx(to)
     }
+
     const onUp = () => {
-      el.removeEventListener('pointermove', onMove)
-      setDraggingIdx(null)
+      if (active) {
+        // Swallow the click that follows a drag so the preview doesn't open.
+        el.addEventListener(
+          'click',
+          (ev) => {
+            ev.preventDefault()
+            ev.stopPropagation()
+          },
+          { capture: true, once: true },
+        )
+      }
+      cleanup()
     }
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerup', onUp, { once: true })
-    el.addEventListener('pointercancel', onUp, { once: true })
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   const toggleSize = (s: string) =>
@@ -213,22 +260,20 @@ export default function AdminProductForm() {
               <div
                 key={src}
                 data-media-idx={i}
-                className={`group relative aspect-[4/5] overflow-hidden rounded-xl bg-cream-200 dark:bg-night-700 ${
-                  draggingIdx === i ? 'z-10 opacity-70 ring-2 ring-marigold-500' : ''
+                onPointerDown={startPress(i)}
+                onClick={() => setPreview(src)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Item ${i + 1} — tap to preview, hold to reorder`}
+                className={`group relative aspect-[4/5] cursor-pointer select-none overflow-hidden rounded-xl bg-cream-200 dark:bg-night-700 ${
+                  draggingIdx === i ? 'z-10 scale-105 opacity-80 shadow-lg ring-2 ring-marigold-500' : ''
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => setPreview(src)}
-                  aria-label={`Preview item ${i + 1}`}
-                  className="block h-full w-full"
-                >
-                  {isVideo(src) ? (
-                    <video src={src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                  ) : (
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  )}
-                </button>
+                {isVideo(src) ? (
+                  <video src={src} muted playsInline preload="metadata" className="pointer-events-none h-full w-full object-cover" />
+                ) : (
+                  <img src={src} alt="" className="pointer-events-none h-full w-full object-cover" />
+                )}
                 {isVideo(src) && (
                   <span className="pointer-events-none absolute left-1 bottom-1 rounded bg-night-900/70 px-1.5 text-xs font-medium text-cream-100">
                     ▶
@@ -241,23 +286,15 @@ export default function AdminProductForm() {
                 )}
                 <button
                   type="button"
-                  onClick={() => removePhoto(i)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removePhoto(i)
+                  }}
                   aria-label="Remove"
                   className="absolute right-1 top-1 rounded-full bg-night-900/70 px-1.5 py-0.5 text-xs text-cream-100"
                 >
                   ✕
-                </button>
-                <button
-                  type="button"
-                  onPointerDown={startDrag(i)}
-                  aria-label={`Drag to reorder item ${i + 1}`}
-                  className="absolute inset-x-0 bottom-0 flex h-7 cursor-grab touch-none items-center justify-center bg-night-900/50 text-cream-100 active:cursor-grabbing"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="8" cy="7" r="1.6" /><circle cx="16" cy="7" r="1.6" />
-                    <circle cx="8" cy="12" r="1.6" /><circle cx="16" cy="12" r="1.6" />
-                    <circle cx="8" cy="17" r="1.6" /><circle cx="16" cy="17" r="1.6" />
-                  </svg>
                 </button>
               </div>
             ))}
@@ -273,8 +310,8 @@ export default function AdminProductForm() {
             </label>
           </div>
           <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
-            Tap a photo to preview it. Hold the dotted bar and drag to change the order — the first
-            item is the cover (photos make the best covers). Videos up to 50 MB.
+            Tap to preview. Press and hold, then drag to reorder — the first item is the cover
+            (photos make the best covers). Videos up to 50 MB.
           </p>
         </div>
 

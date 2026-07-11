@@ -82,7 +82,12 @@ export default function Home() {
 
   useEffect(() => {
     listProducts()
-      .then((list) => setProducts(smartOrder(list)))
+      .then((list) => {
+        setProducts(smartOrder(list))
+        // Default to New Arrivals when there are any and the URL didn't ask
+        // for a specific highlight; fall back to Everything otherwise.
+        if (!searchParams.get('hl')) setHighlight(list.some(isNew) ? 'new' : 'all')
+      })
       .catch((e: Error) => setError(e.message))
     getSettings()
       .then((s) => {
@@ -90,6 +95,7 @@ export default function Home() {
         setSettingsSizes(s.sizes)
       })
       .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Keep the URL shareable/refreshable (defaults are left out of it).
@@ -116,6 +122,14 @@ export default function Home() {
     if (Object.keys(mine.enq).length) options.push(['enquired', '✓ My Enquiries'])
     return options
   }, [hasNew, hasSale, collections, mine])
+
+  // If the active highlight disappears (e.g. you unsave the last saved piece
+  // while viewing Saved), fall back to Everything instead of an empty grid.
+  useEffect(() => {
+    if (products && !highlightOptions.some(([value]) => value === highlight)) {
+      setHighlight('all')
+    }
+  }, [products, highlightOptions, highlight])
 
   const categoryOptions = useMemo(() => {
     const inUse = [...new Set((products ?? []).map((p) => p.category))]

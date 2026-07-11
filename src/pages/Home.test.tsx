@@ -17,13 +17,34 @@ async function ready() {
 }
 
 describe('Home', () => {
-  it('shows everything by default, smart-ordered with sold-out last', async () => {
+  it('defaults to New Arrivals, showing only current new pieces', async () => {
     renderHome()
     await ready()
+    expect(screen.getByLabelText('Highlights')).toHaveValue('new')
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+    expect(titles).toEqual(['Marigold Anarkali Kurti', 'Fuchsia Chanderi Suit Set'])
+  })
+
+  it('shows everything (smart-ordered, sold-out last) under Everything', async () => {
+    renderHome()
+    await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
     expect(titles).toHaveLength(5)
     expect(titles[0]).toBe('Marigold Anarkali Kurti') // newest new arrival
     expect(titles[titles.length - 1]).toBe('Cream Chikankari Kurti') // sold out
+  })
+
+  it('falls back to Everything when the active highlight empties out', async () => {
+    toggleFavorite('demo-dupatta-sunset')
+    renderHome()
+    await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'saved' } })
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
+    // Unsaving the only saved piece should recover, not leave an empty grid
+    fireEvent.click(screen.getByRole('button', { name: 'Remove from my pieces' }))
+    expect(screen.getByLabelText('Highlights')).toHaveValue('all')
+    expect(screen.getAllByRole('heading', { level: 3 }).length).toBeGreaterThan(1)
   })
 
   it('highlights dropdown filters new arrivals, sale and collections', async () => {
@@ -72,6 +93,7 @@ describe('Home', () => {
   it('search narrows the grid', async () => {
     renderHome()
     await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
     fireEvent.change(screen.getByPlaceholderText(/Search kurtis/), { target: { value: 'chikankari' } })
     expect(screen.getByText('Cream Chikankari Kurti')).toBeInTheDocument()
     expect(screen.queryByText('Marigold Anarkali Kurti')).not.toBeInTheDocument()
@@ -80,6 +102,7 @@ describe('Home', () => {
   it('filter sheet: availability filter with clear-all recovery', async () => {
     renderHome()
     await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
     fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.click(screen.getByRole('button', { name: 'On order' }))
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
@@ -92,6 +115,7 @@ describe('Home', () => {
   it('size filter keeps free-size pieces visible', async () => {
     renderHome()
     await ready()
+    fireEvent.change(screen.getByLabelText('Highlights'), { target: { value: 'all' } })
     fireEvent.click(screen.getByRole('button', { name: 'Filters' }))
     fireEvent.click(screen.getByRole('button', { name: '38' }))
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))

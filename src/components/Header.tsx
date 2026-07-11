@@ -51,7 +51,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-3">
           <img
-            src="/logo.png"
+            src="/icon-512.png"
             alt="Manjree's"
             className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm"
           />

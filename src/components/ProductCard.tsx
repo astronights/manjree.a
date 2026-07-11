@@ -90,7 +90,10 @@ export default function ProductCard({ product }: { product: Product }) {
         <h3 className="truncate font-display text-sm font-semibold text-night-800 dark:text-cream-100">
           {product.title}
         </h3>
-        <div className="mt-1 flex items-center justify-between">
+        <p className="mt-0.5 truncate text-[11px] text-night-700/80 dark:text-cream-300/60">
+          {product.category}
+        </p>
+        <div className="mt-1">
           {product.show_price !== false ? (
             onSale(product) ? (
               <span className="flex items-baseline gap-1.5">
@@ -109,7 +112,6 @@ export default function ProductCard({ product }: { product: Product }) {
           ) : (
             <span className="text-xs text-night-700/80 dark:text-cream-300/60">Price on request</span>
           )}
-          <span className="text-[11px] text-night-700/80 dark:text-cream-300/60">{product.category}</span>
         </div>
       </div>
     </Link>

@@ -50,9 +50,11 @@ export default function Header() {
     <header className="sticky top-0 z-20 border-b border-cream-300/60 bg-cream-100/90 backdrop-blur dark:border-night-700 dark:bg-night-900/90">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-marigold-400 font-display text-lg font-bold text-night-900 shadow-sm">
-            M
-          </span>
+          <img
+            src="/logo.png"
+            alt="Manjree's"
+            className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm"
+          />
           <span>
             <span className="block font-display text-xl font-semibold text-night-800 dark:text-cream-100">
               {shop.name}

@@ -80,7 +80,9 @@ export default function AdminOrdering() {
     const current = (ordering[mapKey] as Record<string, OrderStrategy>)[name] ?? ''
     return (
       <div>
-        <label className="text-base font-medium text-night-800 dark:text-cream-100">{name}</label>
+        <label className="text-base font-medium text-night-800 dark:text-cream-100">
+          {name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+        </label>
         <select
           value={current}
           onChange={(e) => patchMap(mapKey, name, e.target.value as OrderStrategy | '')}
@@ -137,7 +139,7 @@ export default function AdminOrdering() {
             <OverrideRow mapKey="byHighlight" name="sale" />
           </div>
           <p className="mt-1.5 text-sm text-night-700/60 dark:text-cream-300/50">
-            (“new” = New Arrivals, “sale” = On Sale.)
+            (“New” = New Arrivals, “Sale” = On Sale.)
           </p>
         </section>
 

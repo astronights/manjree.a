@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { isSupabaseMode, listProducts } from '../../lib/store'
+import { isNew, isSupabaseMode, listProducts } from '../../lib/store'
+import { onSale } from '../../lib/pricing'
 import { supabase } from '../../lib/supabase'
 import { coverMedia } from '../../lib/media'
 import { notifyDefaults } from '../../lib/notify'
@@ -61,10 +62,24 @@ export default function AdminNotify() {
     setBody(defaults.body)
   }, [defaults, touched])
 
-  const covers = useMemo(
-    () => products.map((p) => ({ id: p.id, title: p.title, url: httpCover(p.images) })).filter((c) => c.url),
-    [products],
-  )
+  // The photo picker shows pieces relevant to the chosen update — sale pieces
+  // for a sale, new arrivals for "new", the chosen collection's pieces for a
+  // collection — so the obvious ones are right there. products come newest
+  // first (listProducts sorts by created_at desc), so this stays newest-first.
+  // If nothing matches (e.g. no new arrivals yet) we fall back to all pieces
+  // rather than leave the picker empty.
+  const covers = useMemo(() => {
+    const match = (p: Product) => {
+      if (type === 'sale') return onSale(p)
+      if (type === 'new') return isNew(p)
+      return collection ? p.collection === collection : true
+    }
+    const relevant = products.filter(match)
+    const source = relevant.length ? relevant : products
+    return source
+      .map((p) => ({ id: p.id, title: p.title, url: httpCover(p.images) }))
+      .filter((c) => c.url)
+  }, [products, type, collection])
 
   const canSend = Boolean(title.trim() && body.trim()) && (subscribers ?? 0) > 0 && !sending
 
@@ -132,6 +147,7 @@ export default function AdminNotify() {
                     setType(t.value)
                     setTouched(false)
                     setResult(null)
+                    setImage(null)
                   }}
                   className={`rounded-xl border px-2 py-2.5 text-center text-sm font-medium transition ${
                     type === t.value
@@ -154,6 +170,7 @@ export default function AdminNotify() {
                   onChange={(e) => {
                     setCollection(e.target.value)
                     setTouched(false)
+                    setImage(null)
                   }}
                   className={inputClass}
                 >

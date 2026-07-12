@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { computeFunnel, fetchEvents, summarize, summarizeFilters } from '../../lib/analytics'
 import type { FilterStat, Summary } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
+import { supabase } from '../../lib/supabase'
 import type { FilterKind } from '../../types'
 
 const FILTER_KIND_LABELS: [FilterKind, string][] = [
@@ -33,6 +34,7 @@ function StatTile({ label, value }: { label: string; value: number }) {
 export default function AdminAnalytics() {
   const [data, setData] = useState<Summary | null>(null)
   const [filterStats, setFilterStats] = useState<Map<FilterKind, FilterStat[]>>(new Map())
+  const [subscribers, setSubscribers] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,6 +44,12 @@ export default function AdminAnalytics() {
         setFilterStats(summarizeFilters(events))
       })
       .catch((e: Error) => setError(e.message))
+    if (supabase) {
+      supabase
+        .from('push_subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .then(({ count }) => setSubscribers(count ?? 0))
+    }
   }, [])
 
   if (error) {
@@ -68,10 +76,11 @@ export default function AdminAnalytics() {
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Analytics</h1>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Piece views" value={totals.views} />
         <StatTile label="WhatsApp enquiries" value={totals.enquiries} />
         <StatTile label="Devices" value={totals.devices} />
+        <StatTile label="Notification opt-ins" value={subscribers ?? 0} />
       </div>
 
       {byProduct.length === 0 && filterStats.size === 0 ? (

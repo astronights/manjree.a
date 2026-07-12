@@ -101,13 +101,13 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
         {(mine.hasSeen || mine.hasSaved || mine.hasEnquired) && (
           <div className="mt-5">
             <h3 className="text-base font-medium text-night-800 dark:text-cream-100">My activity</h3>
-            <div className="mt-2 flex flex-col gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {mine.hasSeen && (
                 <button
                   onClick={() => onChange({ hideSeen: !filters.hideSeen })}
                   className={chip(filters.hideSeen)}
                 >
-                  Hide pieces I've seen
+                  Hide seen
                 </button>
               )}
               {mine.hasSaved && (
@@ -115,7 +115,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
                   onClick={() => onChange({ hideSaved: !filters.hideSaved })}
                   className={chip(filters.hideSaved)}
                 >
-                  ♥ Hide saved/pinned by me
+                  ♥ Hide saved
                 </button>
               )}
               {mine.hasEnquired && (
@@ -123,7 +123,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
                   onClick={() => onChange({ hideEnquired: !filters.hideEnquired })}
                   className={chip(filters.hideEnquired)}
                 >
-                  ✓ Hide enquired by me
+                  ✓ Hide enquired
                 </button>
               )}
             </div>

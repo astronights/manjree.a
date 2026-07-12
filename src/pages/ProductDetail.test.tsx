@@ -28,7 +28,7 @@ describe('ProductDetail', () => {
     expect(screen.getByText('₹1,450')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '40' })).toBeInTheDocument()
 
-    const link = screen.getByRole('link', { name: /Enquire on WhatsApp/ })
+    const link = screen.getByRole('link', { name: /WhatsApp/ })
     expect(link.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/\d+\?text=/)
   })
 
@@ -36,7 +36,7 @@ describe('ProductDetail', () => {
     renderDetail('demo-anarkali-marigold')
     await screen.findByRole('heading', { name: 'Marigold Anarkali Kurti' })
     fireEvent.click(screen.getByRole('button', { name: '42' }))
-    const href = screen.getByRole('link', { name: /Enquire on WhatsApp/ }).getAttribute('href')!
+    const href = screen.getByRole('link', { name: /WhatsApp/ }).getAttribute('href')!
     expect(decodeURIComponent(href)).toContain('Size: 42')
   })
 
@@ -52,7 +52,7 @@ describe('ProductDetail', () => {
     renderDetail('demo-anarkali-marigold')
     await screen.findByRole('heading', { name: 'Marigold Anarkali Kurti' })
 
-    const link = screen.getByRole('link', { name: /Enquire on WhatsApp/ })
+    const link = screen.getByRole('link', { name: /WhatsApp/ })
     link.addEventListener('click', (e) => e.preventDefault())
     fireEvent.click(link)
 

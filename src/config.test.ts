@@ -1,4 +1,4 @@
-import { formatPrice, whatsappLink } from './config'
+import { formatPrice, whatsappLabel, whatsappLink } from './config'
 import { seedProducts } from './lib/seed'
 
 describe('formatPrice', () => {
@@ -24,5 +24,18 @@ describe('whatsappLink', () => {
   it('includes the chosen size when one is selected', () => {
     const text = new URL(whatsappLink(product, 'M')).searchParams.get('text')!
     expect(text).toContain('Size: M')
+  })
+
+  it('uses restock copy and no size for sold-out pieces', () => {
+    const sold = { ...product, stock_status: 'sold_out' as const }
+    const text = new URL(whatsappLink(sold, 'M')).searchParams.get('text')!
+    expect(text).toContain('sold out')
+    expect(text).not.toContain('Size:')
+  })
+
+  it('labels correctly by stock status', () => {
+    expect(whatsappLabel('in_stock')).toBe('Order on WhatsApp')
+    expect(whatsappLabel('on_order')).toBe('Order on WhatsApp')
+    expect(whatsappLabel('sold_out')).toBe('Enquire about restock on WhatsApp')
   })
 })

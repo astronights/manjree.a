@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { formatPrice, whatsappLink, shop } from '../config'
+import { formatPrice, whatsappLabel, whatsappLink, shop } from '../config'
 import { getProduct, isNew } from '../lib/store'
 import { recordEvent, recordViewOnce } from '../lib/analytics'
 import { notePieceViewed } from '../lib/push'
@@ -242,7 +242,7 @@ export default function ProductDetail() {
           className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-semibold text-white shadow-md transition hover:brightness-95"
         >
           <WhatsAppIcon />
-          Enquire on WhatsApp
+          {whatsappLabel(product.stock_status)}
         </a>
       </div>
 

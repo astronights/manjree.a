@@ -21,12 +21,11 @@ export default function PushOptIn() {
   }, [])
 
   useEffect(() => {
-    setShow(
-      pushConfigured() &&
-        pushPermission() === 'default' &&
-        piecesViewed() >= 2 &&
-        !localStorage.getItem(DISMISS_KEY),
-    )
+    if (!pushConfigured() || pushPermission() !== 'default') return
+    const viewed = piecesViewed()
+    const raw = localStorage.getItem(DISMISS_KEY)
+    const nextShow = raw === 'done' ? Infinity : raw ? Number(raw) + 10 : 2
+    setShow(viewed >= nextShow)
   }, [location])
 
   if (!show) return null
@@ -36,14 +35,14 @@ export default function PushOptIn() {
     try {
       await subscribeToPush()
     } catch {
-      /* declined or failed — either way, don't nag again */
+      /* declined or failed */
     }
-    localStorage.setItem(DISMISS_KEY, '1')
+    localStorage.setItem(DISMISS_KEY, 'done') // never nag after they've responded
     setShow(false)
   }
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, '1')
+    localStorage.setItem(DISMISS_KEY, String(piecesViewed())) // re-show after 10 more
     setShow(false)
   }
 

@@ -217,6 +217,14 @@ export default function Home() {
     setCategory(value)
   }
 
+  // When opening via a push notification tap the SW appends ?_notif=1.
+  // Clear personal activity filters so the promoted piece isn't hidden by "hide seen".
+  useEffect(() => {
+    if (searchParams.get('_notif') !== '1') return
+    setFilters((f) => ({ ...f, hideSeen: false, onlySaved: false, onlyEnquired: false }))
+    // The URL sync effect removes _notif automatically (it only writes known filter params).
+  }, [searchParams])
+
   // Record search terms once the customer pauses typing.
   useEffect(() => {
     const q = filters.query.trim()

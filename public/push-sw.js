@@ -1,6 +1,6 @@
 // Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
-// v11 — revert icon to logo; iOS gets no photo (platform limitation)
+// v12 — clear personal filters on notification tap so promoted piece isn't hidden
 
 // Take over immediately whenever a new version installs — no need to close all tabs.
 self.addEventListener('install', () => self.skipWaiting())
@@ -77,7 +77,11 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   // openWindow requires an absolute URL; resolve relative paths against the SW origin.
   const raw = (event.notification.data && event.notification.data.url) || '/'
-  const url = raw.startsWith('http') ? raw : self.location.origin + raw
+  const base = raw.startsWith('http') ? raw : self.location.origin + raw
+  // Signal the app to clear personal activity filters so the promoted piece isn't hidden.
+  const urlObj = new URL(base)
+  urlObj.searchParams.set('_notif', '1')
+  const url = urlObj.toString()
 
   event.waitUntil(
     self.clients

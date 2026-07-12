@@ -45,30 +45,51 @@ function SegmentedControl({
   )
 }
 
+function Spinner() {
+  return (
+    <svg
+      className="animate-spin text-night-700/40 dark:text-cream-300/40"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    >
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
+  )
+}
+
 function Toggle({
   checked,
   onChange,
   disabled,
+  busy,
 }: {
   checked: boolean
   onChange: (v: boolean) => void
   disabled?: boolean
+  busy?: boolean
 }) {
   return (
     <button
       role="switch"
       aria-checked={checked}
-      disabled={disabled}
+      disabled={disabled || busy}
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none disabled:opacity-40 ${
-        checked ? 'bg-marigold-400' : 'bg-cream-300 dark:bg-night-700'
-      }`}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none ${
+        disabled ? 'opacity-35' : ''
+      } ${checked ? 'bg-marigold-400' : 'bg-cream-300 dark:bg-night-700'}`}
     >
       <span
-        className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+        className={`absolute top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-200 ${
           checked ? 'translate-x-5' : 'translate-x-0.5'
         }`}
-      />
+      >
+        {busy && <Spinner />}
+      </span>
     </button>
   )
 }
@@ -89,6 +110,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open) return
+    setSubscribed(null) // reset while we re-check
     if (!pushConfigured()) return
     setPermission(pushPermission())
     isSubscribed().then(setSubscribed).catch(() => setSubscribed(false))
@@ -191,11 +213,18 @@ export default function SettingsSheet({ open, onClose }: Props) {
                     </p>
                   </span>
                 </div>
-                <Toggle
-                  checked={Boolean(subscribed)}
-                  onChange={handleToggleNotifications}
-                  disabled={busy || pushDenied || subscribed === null}
-                />
+                {subscribed === null && !pushDenied ? (
+                  <div className="flex h-7 w-12 shrink-0 items-center justify-center">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <Toggle
+                    checked={Boolean(subscribed)}
+                    onChange={handleToggleNotifications}
+                    disabled={pushDenied}
+                    busy={busy}
+                  />
+                )}
               </div>
             </>
           )}

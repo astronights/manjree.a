@@ -259,10 +259,9 @@ export default function AdminNotify() {
             <div className="mt-2 flex gap-3 rounded-2xl bg-cream-50 p-3 shadow-sm ring-1 ring-cream-300/60 dark:bg-night-800 dark:ring-night-700">
               <img src="/icon-192.png" alt="" className="h-10 w-10 shrink-0 rounded-lg" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-night-800 dark:text-cream-100">Manjree's</p>
-                <p className="text-sm text-night-700/85 dark:text-cream-300/70">
-                  {title || 'Headline'}{title && body ? '\n' : ''}{body || ''}
-                </p>
+                <p className="truncate text-[11px] text-night-700/50 dark:text-cream-300/40">Manjree's · manjree.vercel.app</p>
+                <p className="truncate font-semibold text-night-800 dark:text-cream-100">{title || 'Headline'}</p>
+                {body && <p className="text-sm text-night-700/85 dark:text-cream-300/70">{body}</p>}
                 <p className="mt-0.5 truncate text-xs text-night-700/60 dark:text-cream-300/50">opens {defaults.url}</p>
               </div>
               {image && <img src={image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />}

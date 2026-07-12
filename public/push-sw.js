@@ -1,6 +1,6 @@
 // Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
-// v3 — force-activate via skipWaiting so every device picks up changes immediately
+// v4 — admin title as notification title; badge removed (full-colour icon renders as broken ring)
 
 // Take over immediately whenever a new version installs — no need to close all tabs.
 self.addEventListener('install', () => self.skipWaiting())
@@ -58,15 +58,15 @@ self.addEventListener('push', (event) => {
   } catch {
     data = {}
   }
-  // Always use the brand name as the notification title so it never gets
-  // cropped. The admin's headline and message are combined into the body,
-  // which wraps freely — matching the Instagram / e-commerce convention.
-  const title = "Manjree's"
-  const body = [data.title, data.body].filter(Boolean).join('\n')
+  // Use the admin's headline as the bold notification title.
+  // Android Chrome automatically shows "Manjree's" (the PWA name) in the
+  // notification header row — it acts as the source label, so no need to
+  // hardcode it in the title. badge is intentionally omitted: the full-colour
+  // icon renders as a broken empty ring when Chrome scales it down to badge size.
+  const title = data.title || "Manjree's"
   const options = {
-    body,
+    body: data.body || '',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
     image: data.image || undefined,
     data: { url: data.url || '/' },
     tag: data.tag || 'manjrees',

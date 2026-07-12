@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
-import PushOptIn from './components/PushOptIn'
+import PushStatus from './components/PushStatus'
 import { isSupabaseMode } from './lib/store'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
@@ -25,7 +25,7 @@ export default function App() {
           real shop.
         </p>
       )}
-      <PushOptIn />
+      <PushStatus />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />

@@ -45,6 +45,31 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return arr
 }
 
+// Unsubscribes the browser and removes the record from the server.
+export async function unsubscribeFromPush(): Promise<void> {
+  const reg = await navigator.serviceWorker.ready
+  const sub = await reg.pushManager.getSubscription()
+  if (!sub) return
+  const endpoint = sub.endpoint
+  await sub.unsubscribe()
+  await fetch('/api/unsubscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint }),
+  }).catch(() => {})
+}
+
+// Returns whether the browser currently has an active push subscription.
+export async function isSubscribed(): Promise<boolean> {
+  if (!pushConfigured()) return false
+  try {
+    const reg = await navigator.serviceWorker.ready
+    return Boolean(await reg.pushManager.getSubscription())
+  } catch {
+    return false
+  }
+}
+
 // Requests permission, subscribes, and stores the subscription server-side.
 // Returns true when subscribed; false if the customer declined.
 export async function subscribeToPush(): Promise<boolean> {

@@ -53,9 +53,13 @@ self.addEventListener('push', (event) => {
   } catch {
     data = {}
   }
-  const title = data.title || "Manjree's"
+  // Always use the brand name as the notification title so it never gets
+  // cropped. The admin's headline and message are combined into the body,
+  // which wraps freely — matching the Instagram / e-commerce convention.
+  const title = "Manjree's"
+  const body = [data.title, data.body].filter(Boolean).join('\n')
   const options = {
-    body: data.body || '',
+    body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     image: data.image || undefined,

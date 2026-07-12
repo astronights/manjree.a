@@ -18,6 +18,7 @@ import { orderProducts } from '../lib/order'
 import { resolveStrategy } from '../lib/ordering'
 import type { Engagement, OrderingConfig } from '../lib/ordering'
 import { onSale } from '../lib/pricing'
+import { coverMedia } from '../lib/media'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
 
@@ -88,9 +89,16 @@ export default function Home() {
     listProducts()
       .then((list) => {
         setProducts(list)
-        // Default to New Arrivals when there are any and the URL didn't ask
-        // for a specific highlight; fall back to Everything otherwise.
         if (!searchParams.get('hl')) setHighlight(list.some(isNew) ? 'new' : 'all')
+        // Ask the service worker to cache only cover photos (not gallery images).
+        if ('serviceWorker' in navigator) {
+          const covers = list
+            .map((p) => coverMedia(p.images))
+            .filter((url): url is string => url != null && url.startsWith('http'))
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.active?.postMessage({ type: 'CACHE_COVERS', urls: covers })
+          }).catch(() => {})
+        }
       })
       .catch((e: Error) => setError(e.message))
     getSettings()

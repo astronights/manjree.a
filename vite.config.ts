@@ -42,16 +42,8 @@ export default defineConfig({
               expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
-          {
-            // Product images from Supabase storage — capped to keep storage
-            // reasonable; 40 entries × ~2 MB = ~80 MB worst case.
-            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'product-images',
-              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
-            },
-          },
+          // Product images are cached selectively by push-sw.js (covers only).
+          // No automatic Supabase storage rule here — gallery images go to network.
         ],
       },
     }),

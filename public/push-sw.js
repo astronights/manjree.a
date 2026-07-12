@@ -1,5 +1,50 @@
-// Push handlers layered onto the generated Workbox service worker via
+// Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
+
+const COVER_CACHE = 'product-covers'
+
+// Home page sends {type:'CACHE_COVERS', urls:[...]} after the grid renders.
+// We fetch-and-store only the cover photo for each product — gallery images
+// are left to the network. Old entries for deleted products are evicted too.
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'CACHE_COVERS') return
+  const urls = (Array.isArray(event.data.urls) ? event.data.urls : []).filter(
+    (u) => typeof u === 'string',
+  )
+  if (!urls.length) return
+  event.waitUntil(
+    caches.open(COVER_CACHE).then(async (cache) => {
+      // Fetch any URL not already cached.
+      await Promise.all(
+        urls.map(async (url) => {
+          if (await cache.match(url)) return
+          try {
+            const res = await fetch(url)
+            if (res.ok) await cache.put(url, res)
+          } catch {
+            /* offline — skip */
+          }
+        }),
+      )
+      // Evict covers for products that are no longer in the catalog.
+      const keys = await cache.keys()
+      const live = new Set(urls)
+      await Promise.all(keys.filter((r) => !live.has(r.url)).map((r) => cache.delete(r)))
+    }),
+  )
+})
+
+// Serve Supabase storage images from the cover cache when available;
+// fall through to the network for gallery images (which aren't cached).
+self.addEventListener('fetch', (event) => {
+  if (!event.request.url.includes('.supabase.co/storage/')) return
+  event.respondWith(
+    caches
+      .open(COVER_CACHE)
+      .then((cache) => cache.match(event.request))
+      .then((hit) => hit ?? fetch(event.request)),
+  )
+})
 
 self.addEventListener('push', (event) => {
   let data = {}

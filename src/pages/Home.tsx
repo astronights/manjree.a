@@ -145,7 +145,7 @@ export default function Home() {
     if (hasNew) options.push(['new', '✨ New Arrivals'])
     if (hasSale) options.push(['sale', '🏷️ On Sale'])
     for (const c of collections) options.push([`c:${c}`, `✦ ${c}`])
-    if (hasFresh) options.push(['fresh', '👁 Fresh for you'])
+    if (hasFresh) options.push(['fresh', '✦ Fresh for you'])
     if (Object.keys(mine.favs).length) options.push(['saved', '♥ Saved by me'])
     if (Object.keys(mine.enq).length) options.push(['enquired', '✓ My Enquiries'])
     return options

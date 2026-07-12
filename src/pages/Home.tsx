@@ -18,6 +18,7 @@ import { orderProducts } from '../lib/order'
 import { resolveStrategy } from '../lib/ordering'
 import type { Engagement, OrderingConfig } from '../lib/ordering'
 import { onSale } from '../lib/pricing'
+import { hasViewedProduct, piecesViewed } from '../lib/push'
 import { coverMedia } from '../lib/media'
 import ProductCard from '../components/ProductCard'
 import type { Product } from '../types'
@@ -43,7 +44,7 @@ function Chevron() {
 }
 
 // Highlights are orthogonal to garment type:
-// 'all' | 'new' | 'sale' | 'saved' | 'enquired' | 'c:<collection>'.
+// 'all' | 'new' | 'sale' | 'saved' | 'enquired' | 'fresh' | 'c:<collection>'.
 function matchesHighlight(
   p: Product,
   highlight: string,
@@ -53,6 +54,7 @@ function matchesHighlight(
   if (highlight === 'sale') return onSale(p)
   if (highlight === 'saved') return p.id in mine.favs
   if (highlight === 'enquired') return p.id in mine.enq
+  if (highlight === 'fresh') return !hasViewedProduct(p.id)
   if (highlight.startsWith('c:')) return p.collection === highlight.slice(2)
   return true
 }
@@ -133,16 +135,21 @@ export default function Home() {
   )
   const hasNew = useMemo(() => (products ?? []).some(isNew), [products])
   const hasSale = useMemo(() => (products ?? []).some(onSale), [products])
+  const hasFresh = useMemo(
+    () => piecesViewed() >= 3 && (products ?? []).some((p) => !hasViewedProduct(p.id)),
+    [products],
+  )
 
   const highlightOptions = useMemo(() => {
     const options: [string, string][] = [['all', 'Everything']]
     if (hasNew) options.push(['new', '✨ New Arrivals'])
     if (hasSale) options.push(['sale', '🏷️ On Sale'])
     for (const c of collections) options.push([`c:${c}`, `✦ ${c}`])
+    if (hasFresh) options.push(['fresh', '👁 Fresh for you'])
     if (Object.keys(mine.favs).length) options.push(['saved', '♥ Saved by me'])
     if (Object.keys(mine.enq).length) options.push(['enquired', '✓ My Enquiries'])
     return options
-  }, [hasNew, hasSale, collections, mine])
+  }, [hasNew, hasSale, collections, hasFresh, mine])
 
   // If the active highlight disappears (e.g. you unsave the last saved piece
   // while viewing Saved), fall back to Everything instead of an empty grid.
@@ -193,6 +200,7 @@ export default function Home() {
   const pickHighlight = (value: string) => {
     if (value === 'new') recordFilterUse('category', 'New Arrivals')
     else if (value === 'sale') recordFilterUse('category', 'On Sale')
+    else if (value === 'fresh') recordFilterUse('category', 'Fresh for you')
     else if (value === 'saved') recordFilterUse('category', 'Saved by me')
     else if (value === 'enquired') recordFilterUse('category', 'My Enquiries')
     else if (value.startsWith('c:')) recordFilterUse('collection', value.slice(2))

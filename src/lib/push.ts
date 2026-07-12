@@ -36,6 +36,10 @@ export function piecesViewed(): number {
   return Number(localStorage.getItem(VIEWED_KEY) || '0')
 }
 
+export function hasViewedProduct(productId: string): boolean {
+  return Boolean(localStorage.getItem(`manjrees.pv.${productId}`))
+}
+
 function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
   const normalized = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')

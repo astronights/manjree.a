@@ -1,6 +1,6 @@
 // Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
-// v5 — proper monochrome badge (white M lettermark SVG)
+// v10 — icon = product photo when present so iOS shows the image (image field unsupported on iOS)
 
 // Take over immediately whenever a new version installs — no need to close all tabs.
 self.addEventListener('install', () => self.skipWaiting())
@@ -63,7 +63,9 @@ self.addEventListener('push', (event) => {
   const title = data.title || "Manjree's"
   const options = {
     body: data.body || '',
-    icon: '/icon-192.png',
+    // iOS ignores `image` entirely — using the product photo as `icon` is the
+    // only way to show it there. Android shows icon (small, right) + image (large banner).
+    icon: data.image || '/icon-192.png',
     image: data.image || undefined,
     data: { url: data.url || '/' },
     tag: data.tag || 'manjrees',

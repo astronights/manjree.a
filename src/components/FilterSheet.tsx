@@ -41,7 +41,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-night-800 dark:text-cream-100">Filters</h2>
           <button
-            onClick={() => onChange({ sizes: [], availability: null, sort: 'featured', hideSeen: false, onlySaved: false, onlyEnquired: false })}
+            onClick={() => onChange({ sizes: [], availability: null, sort: 'featured', hideSeen: false, hideSaved: false, hideEnquired: false })}
             className="text-sm text-night-700/80 underline dark:text-cream-300/70"
           >
             Clear all
@@ -112,18 +112,18 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
               )}
               {mine.hasSaved && (
                 <button
-                  onClick={() => onChange({ onlySaved: !filters.onlySaved })}
-                  className={chip(filters.onlySaved)}
+                  onClick={() => onChange({ hideSaved: !filters.hideSaved })}
+                  className={chip(filters.hideSaved)}
                 >
-                  ♥ Only saved by me
+                  ♥ Hide saved/pinned by me
                 </button>
               )}
               {mine.hasEnquired && (
                 <button
-                  onClick={() => onChange({ onlyEnquired: !filters.onlyEnquired })}
-                  className={chip(filters.onlyEnquired)}
+                  onClick={() => onChange({ hideEnquired: !filters.hideEnquired })}
+                  className={chip(filters.hideEnquired)}
                 >
-                  ✓ Only enquired by me
+                  ✓ Hide enquired by me
                 </button>
               )}
             </div>

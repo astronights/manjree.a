@@ -170,8 +170,8 @@ export default function Home() {
         matchesHighlight(p, highlight, mine) &&
         (category === 'All' || p.category === category) &&
         (!filters.hideSeen || !hasViewedProduct(p.id)) &&
-        (!filters.onlySaved || p.id in mine.favs) &&
-        (!filters.onlyEnquired || p.id in mine.enq),
+        (!filters.hideSaved || !(p.id in mine.favs)) &&
+        (!filters.hideEnquired || !(p.id in mine.enq)),
     )
     // applyFilters sorts when the customer picked an explicit sort; for the
     // default "Recommended" (featured) it leaves order to us below.
@@ -218,10 +218,10 @@ export default function Home() {
   }
 
   // When opening via a push notification tap the SW appends ?_notif=1.
-  // Clear personal activity filters so the promoted piece isn't hidden by "hide seen".
+  // Enable hideSeen so the catalog shows only unseen pieces — notifications are for fresh things.
   useEffect(() => {
     if (searchParams.get('_notif') !== '1') return
-    setFilters((f) => ({ ...f, hideSeen: false, onlySaved: false, onlyEnquired: false }))
+    setFilters((f) => ({ ...f, hideSeen: true }))
     // The URL sync effect removes _notif automatically (it only writes known filter params).
   }, [searchParams])
 
@@ -347,20 +347,20 @@ export default function Home() {
               Hide seen ✕
             </button>
           )}
-          {filters.onlySaved && (
+          {filters.hideSaved && (
             <button
-              onClick={() => patchFilters({ onlySaved: false })}
+              onClick={() => patchFilters({ hideSaved: false })}
               className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
             >
-              ♥ Saved ✕
+              Hide saved ✕
             </button>
           )}
-          {filters.onlyEnquired && (
+          {filters.hideEnquired && (
             <button
-              onClick={() => patchFilters({ onlyEnquired: false })}
+              onClick={() => patchFilters({ hideEnquired: false })}
               className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
             >
-              ✓ Enquired ✕
+              Hide enquired ✕
             </button>
           )}
         </div>

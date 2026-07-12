@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { defaultCategories, defaultNewArrivalDays, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import { defaultCategories, defaultNewArrivalDays, defaultOrdering, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import type { OrderingConfig } from '../../lib/ordering'
 import { signOut } from '../../lib/store'
 
 // One entry per line; commas also accepted.
@@ -16,6 +17,7 @@ export default function AdminSettings() {
   const [categoriesText, setCategoriesText] = useState<string | null>(null)
   const [sizesText, setSizesText] = useState('')
   const [daysText, setDaysText] = useState(String(defaultNewArrivalDays))
+  const [ordering, setOrdering] = useState<OrderingConfig>(defaultOrdering)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,6 +27,7 @@ export default function AdminSettings() {
       setCategoriesText(s.categories.join('\n'))
       setSizesText(s.sizes.join(', '))
       setDaysText(String(s.new_arrival_days))
+      setOrdering(s.ordering)
     })
   }, [])
 
@@ -41,6 +44,7 @@ export default function AdminSettings() {
         categories: parseList(categoriesText),
         sizes: parseList(sizesText),
         new_arrival_days: Number(daysText),
+        ordering,
       })
       setCategoriesText(clean.categories.join('\n'))
       setSizesText(clean.sizes.join(', '))

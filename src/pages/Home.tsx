@@ -166,7 +166,12 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const scoped = (products ?? []).filter(
-      (p) => matchesHighlight(p, highlight, mine) && (category === 'All' || p.category === category),
+      (p) =>
+        matchesHighlight(p, highlight, mine) &&
+        (category === 'All' || p.category === category) &&
+        (!filters.hideSeen || !hasViewedProduct(p.id)) &&
+        (!filters.onlySaved || p.id in mine.favs) &&
+        (!filters.onlyEnquired || p.id in mine.enq),
     )
     // applyFilters sorts when the customer picked an explicit sort; for the
     // default "Recommended" (featured) it leaves order to us below.
@@ -326,6 +331,30 @@ export default function Home() {
               {SORT_LABELS.find(([v]) => v === filters.sort)?.[1]} ✕
             </button>
           )}
+          {filters.hideSeen && (
+            <button
+              onClick={() => patchFilters({ hideSeen: false })}
+              className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
+            >
+              Hide seen ✕
+            </button>
+          )}
+          {filters.onlySaved && (
+            <button
+              onClick={() => patchFilters({ onlySaved: false })}
+              className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
+            >
+              ♥ Saved ✕
+            </button>
+          )}
+          {filters.onlyEnquired && (
+            <button
+              onClick={() => patchFilters({ onlyEnquired: false })}
+              className="shrink-0 rounded-full bg-night-800 px-3 py-1 text-xs font-medium text-cream-100 dark:bg-cream-200 dark:text-night-900"
+            >
+              ✓ Enquired ✕
+            </button>
+          )}
         </div>
       )}
 
@@ -363,6 +392,11 @@ export default function Home() {
         filters={filters}
         onChange={patchFilters}
         sizes={settingsSizes}
+        mine={{
+          hasSeen: piecesViewed() > 0,
+          hasSaved: Object.keys(mine.favs).length > 0,
+          hasEnquired: Object.keys(mine.enq).length > 0,
+        }}
       />
     </main>
   )

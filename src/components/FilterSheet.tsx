@@ -7,6 +7,7 @@ interface Props {
   filters: CatalogFilters
   onChange: (patch: Partial<CatalogFilters>) => void
   sizes: string[]
+  mine: { hasSeen: boolean; hasSaved: boolean; hasEnquired: boolean }
 }
 
 const AVAILABILITY: [StockStatus | null, string][] = [
@@ -22,7 +23,7 @@ export const SORT_LABELS: [SortOrder, string][] = [
   ['price_desc', 'Price: high to low'],
 ]
 
-export default function FilterSheet({ open, onClose, filters, onChange, sizes }: Props) {
+export default function FilterSheet({ open, onClose, filters, onChange, sizes, mine }: Props) {
   if (!open) return null
 
   const chip = (active: boolean) =>
@@ -40,7 +41,7 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes }:
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-night-800 dark:text-cream-100">Filters</h2>
           <button
-            onClick={() => onChange({ sizes: [], availability: null, sort: 'featured' })}
+            onClick={() => onChange({ sizes: [], availability: null, sort: 'featured', hideSeen: false, onlySaved: false, onlyEnquired: false })}
             className="text-sm text-night-700/80 underline dark:text-cream-300/70"
           >
             Clear all
@@ -96,6 +97,38 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes }:
             ))}
           </div>
         </div>
+
+        {(mine.hasSeen || mine.hasSaved || mine.hasEnquired) && (
+          <div className="mt-5">
+            <h3 className="text-base font-medium text-night-800 dark:text-cream-100">My activity</h3>
+            <div className="mt-2 flex flex-col gap-2">
+              {mine.hasSeen && (
+                <button
+                  onClick={() => onChange({ hideSeen: !filters.hideSeen })}
+                  className={chip(filters.hideSeen)}
+                >
+                  Hide pieces I've seen
+                </button>
+              )}
+              {mine.hasSaved && (
+                <button
+                  onClick={() => onChange({ onlySaved: !filters.onlySaved })}
+                  className={chip(filters.onlySaved)}
+                >
+                  ♥ Only saved by me
+                </button>
+              )}
+              {mine.hasEnquired && (
+                <button
+                  onClick={() => onChange({ onlyEnquired: !filters.onlyEnquired })}
+                  className={chip(filters.onlyEnquired)}
+                >
+                  ✓ Only enquired by me
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <button
           onClick={onClose}

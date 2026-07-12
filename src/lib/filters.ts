@@ -12,6 +12,9 @@ export interface CatalogFilters {
   sizes: string[]
   availability: StockStatus | null
   sort: SortOrder
+  hideSeen: boolean
+  onlySaved: boolean
+  onlyEnquired: boolean
 }
 
 export const emptyFilters: CatalogFilters = {
@@ -19,12 +22,22 @@ export const emptyFilters: CatalogFilters = {
   sizes: [],
   availability: null,
   sort: 'featured',
+  hideSeen: false,
+  onlySaved: false,
+  onlyEnquired: false,
 }
 
 // Badge count for the funnel button (the query is visible in the search box,
 // so it doesn't count).
 export function countActiveFilters(f: CatalogFilters): number {
-  return (f.sizes.length ? 1 : 0) + (f.availability ? 1 : 0) + (f.sort !== 'featured' ? 1 : 0)
+  return (
+    (f.sizes.length ? 1 : 0) +
+    (f.availability ? 1 : 0) +
+    (f.sort !== 'featured' ? 1 : 0) +
+    (f.hideSeen ? 1 : 0) +
+    (f.onlySaved ? 1 : 0) +
+    (f.onlyEnquired ? 1 : 0)
+  )
 }
 
 export function matchesQuery(p: Product, query: string): boolean {
@@ -66,6 +79,9 @@ export function filtersToParams(f: CatalogFilters, category: string | null): URL
   if (f.availability) params.set('avail', f.availability)
   if (f.sort !== 'featured') params.set('sort', f.sort)
   if (category) params.set('cat', category)
+  if (f.hideSeen) params.set('hs', '1')
+  if (f.onlySaved) params.set('os', '1')
+  if (f.onlyEnquired) params.set('oe', '1')
   return params
 }
 
@@ -81,6 +97,9 @@ export function filtersFromParams(params: URLSearchParams): {
       sizes: params.get('size')?.split(',').filter(Boolean) ?? [],
       availability: avail && STATUSES.includes(avail) ? avail : null,
       sort: sort && SORTS.includes(sort) ? sort : 'featured',
+      hideSeen: params.get('hs') === '1',
+      onlySaved: params.get('os') === '1',
+      onlyEnquired: params.get('oe') === '1',
     },
     category: params.get('cat'),
   }

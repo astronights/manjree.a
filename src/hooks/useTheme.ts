@@ -29,5 +29,10 @@ export function useTheme() {
     setTheme(next)
   }
 
-  return { theme, toggle }
+  const setMode = (mode: Theme) => {
+    localStorage.setItem(KEY, mode)
+    setTheme(mode)
+  }
+
+  return { theme, toggle, setMode }
 }

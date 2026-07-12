@@ -1,20 +1,13 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { shop } from '../config'
-import { useTheme } from '../hooks/useTheme'
+import SettingsSheet from './SettingsSheet'
 
-function SunIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" />
-    </svg>
-  )
-}
-
-function MoonIcon() {
+function GearIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   )
 }
@@ -45,54 +38,56 @@ function InstagramIcon() {
 }
 
 export default function Header() {
-  const { toggle } = useTheme()
+  const [settingsOpen, setSettingsOpen] = useState(false)
   return (
-    <header className="sticky top-0 z-20 border-b border-cream-300/60 bg-cream-100/90 backdrop-blur dark:border-night-700 dark:bg-night-900/90">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-3">
-          <img
-            src="/icon-512.png"
-            alt="Manjree's"
-            className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm"
-          />
-          <span>
-            <span className="block font-display text-xl font-semibold text-night-800 dark:text-cream-100">
-              {shop.name}
+    <>
+      <header className="sticky top-0 z-20 border-b border-cream-300/60 bg-cream-100/90 backdrop-blur dark:border-night-700 dark:bg-night-900/90">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src="/icon-512.png"
+              alt="Manjree's"
+              className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm"
+            />
+            <span>
+              <span className="block font-display text-xl font-semibold text-night-800 dark:text-cream-100">
+                {shop.name}
+              </span>
+              <span className="hidden text-[11px] tracking-wide text-night-700/85 sm:block dark:text-cream-300/70">
+                {shop.tagline}
+              </span>
             </span>
-            <span className="hidden text-[11px] tracking-wide text-night-700/85 sm:block dark:text-cream-300/70">
-              {shop.tagline}
-            </span>
-          </span>
-        </Link>
-        <div className="flex items-center gap-1">
-          <a
-            href={`https://wa.me/${shop.whatsappNumber}`}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="WhatsApp"
-            className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
-          >
-            <WhatsAppIcon />
-          </a>
-          <a
-            href={shop.instagram}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Instagram"
-            className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
-          >
-            <InstagramIcon />
-          </a>
-          <button
-            onClick={toggle}
-            aria-label="Toggle dark mode"
-            className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
-          >
-            <span className="dark:hidden"><MoonIcon /></span>
-            <span className="hidden dark:inline"><SunIcon /></span>
-          </button>
+          </Link>
+          <div className="flex items-center gap-1">
+            <a
+              href={`https://wa.me/${shop.whatsappNumber}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="WhatsApp"
+              className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+            >
+              <WhatsAppIcon />
+            </a>
+            <a
+              href={shop.instagram}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram"
+              className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+            >
+              <InstagramIcon />
+            </a>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Preferences"
+              className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
+            >
+              <GearIcon />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   )
 }

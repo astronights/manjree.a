@@ -43,12 +43,13 @@ export default defineConfig({
             },
           },
           {
-            // Product images from Supabase storage
+            // Product images from Supabase storage — capped to keep storage
+            // reasonable; 40 entries × ~2 MB = ~80 MB worst case.
             urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'product-images',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
         ],

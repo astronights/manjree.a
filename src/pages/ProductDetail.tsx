@@ -25,6 +25,7 @@ export default function ProductDetail() {
   const [size, setSize] = useState('')
   const [enquired, setEnquired] = useState<string | null>(() => enquiredAt(id))
   const [saved, setSaved] = useState(() => isFavorite(id))
+  const [preview, setPreview] = useState<string | null>(null)
 
   useEffect(() => {
     setEnquired(enquiredAt(id))
@@ -88,12 +89,19 @@ export default function ProductDetail() {
                 className="aspect-[4/5] w-full shrink-0 snap-center bg-night-900 object-contain"
               />
             ) : (
-              <img
+              <button
                 key={i}
-                src={src}
-                alt={`${product.title} — photo ${i + 1}`}
-                className="aspect-[4/5] w-full shrink-0 snap-center object-cover"
-              />
+                type="button"
+                onClick={() => setPreview(src)}
+                aria-label={`View photo ${i + 1} full screen`}
+                className="aspect-[4/5] w-full shrink-0 snap-center"
+              >
+                <img
+                  src={src}
+                  alt={`${product.title} — photo ${i + 1}`}
+                  className="h-full w-full object-cover"
+                />
+              </button>
             ),
           )}
         </div>
@@ -233,6 +241,36 @@ export default function ProductDetail() {
           Enquire on WhatsApp
         </a>
       </div>
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night-900/90 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Photo preview"
+          onClick={() => setPreview(null)}
+        >
+          {isVideo(preview) ? (
+            <video
+              src={preview}
+              controls
+              autoPlay
+              playsInline
+              className="max-h-full max-w-full rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img src={preview} alt={product.title} className="max-h-full max-w-full rounded-xl object-contain" />
+          )}
+          <button
+            onClick={() => setPreview(null)}
+            aria-label="Close preview"
+            className="absolute right-4 top-4 rounded-full bg-cream-50/90 px-3 py-1.5 text-lg text-night-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </main>
   )
 }

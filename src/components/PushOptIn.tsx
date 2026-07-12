@@ -11,6 +11,15 @@ export default function PushOptIn() {
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
 
+  // If permission was already granted (e.g. after clearing site data wiped the
+  // service worker registration), silently re-establish the subscription so the
+  // admin's subscriber count stays accurate. No bar needed — we already have consent.
+  useEffect(() => {
+    if (pushConfigured() && pushPermission() === 'granted') {
+      subscribeToPush().catch(() => {})
+    }
+  }, [])
+
   useEffect(() => {
     setShow(
       pushConfigured() &&

@@ -75,21 +75,21 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = (event.notification.data && event.notification.data.url) || '/'
+  // openWindow requires an absolute URL; resolve relative paths against the SW origin.
+  const raw = (event.notification.data && event.notification.data.url) || '/'
+  const url = raw.startsWith('http') ? raw : self.location.origin + raw
+
   event.waitUntil(
-    (async () => {
-      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      for (const client of clients) {
-        if ('focus' in client) {
-          try {
-            await client.navigate(url)
-          } catch {
-            /* cross-origin or navigation blocked — just focus */
-          }
-          return client.focus()
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => {
+        // If a window from our origin is already open, navigate it and bring it forward.
+        const existing = clients.find((c) => c.url.startsWith(self.location.origin))
+        if (existing) {
+          return existing.navigate(url).then((c) => (c || existing).focus()).catch(() => existing.focus())
         }
-      }
-      return self.clients.openWindow(url)
-    })(),
+        // No existing window — open a new one (works for both PWA and browser).
+        return self.clients.openWindow(url)
+      }),
   )
 })

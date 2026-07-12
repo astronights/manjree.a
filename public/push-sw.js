@@ -63,7 +63,6 @@ self.addEventListener('push', (event) => {
   const title = data.title || "Manjree's"
   const options = {
     body: data.body || '',
-    badge: '/badge-96.svg',
     image: data.image || undefined,
     data: { url: data.url || '/' },
     tag: data.tag || 'manjrees',

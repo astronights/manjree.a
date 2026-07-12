@@ -101,29 +101,21 @@ export default function FilterSheet({ open, onClose, filters, onChange, sizes, m
         {(mine.hasSeen || mine.hasSaved || mine.hasEnquired) && (
           <div className="mt-5">
             <h3 className="text-base font-medium text-night-800 dark:text-cream-100">My activity</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-night-700/70 dark:text-cream-300/60">Hide:</span>
               {mine.hasSeen && (
-                <button
-                  onClick={() => onChange({ hideSeen: !filters.hideSeen })}
-                  className={chip(filters.hideSeen)}
-                >
-                  Hide seen
+                <button onClick={() => onChange({ hideSeen: !filters.hideSeen })} className={chip(filters.hideSeen)}>
+                  Seen
                 </button>
               )}
               {mine.hasSaved && (
-                <button
-                  onClick={() => onChange({ hideSaved: !filters.hideSaved })}
-                  className={chip(filters.hideSaved)}
-                >
-                  ♥ Hide saved
+                <button onClick={() => onChange({ hideSaved: !filters.hideSaved })} className={chip(filters.hideSaved)}>
+                  ♥ Saved
                 </button>
               )}
               {mine.hasEnquired && (
-                <button
-                  onClick={() => onChange({ hideEnquired: !filters.hideEnquired })}
-                  className={chip(filters.hideEnquired)}
-                >
-                  ✓ Hide enquired
+                <button onClick={() => onChange({ hideEnquired: !filters.hideEnquired })} className={chip(filters.hideEnquired)}>
+                  ✓ Enquired
                 </button>
               )}
             </div>

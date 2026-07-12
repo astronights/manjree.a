@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
+import PushOptIn from './components/PushOptIn'
 import { isSupabaseMode } from './lib/store'
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
@@ -9,6 +10,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProductForm from './pages/admin/AdminProductForm'
 import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminOrdering from './pages/admin/AdminOrdering'
+import AdminNotify from './pages/admin/AdminNotify'
 import AdminSettings from './pages/admin/AdminSettings'
 
 export default function App() {
@@ -23,6 +25,7 @@ export default function App() {
           real shop.
         </p>
       )}
+      <PushOptIn />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />
@@ -31,6 +34,7 @@ export default function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/ordering" element={<AdminOrdering />} />
+          <Route path="/admin/notify" element={<AdminNotify />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/new" element={<AdminProductForm />} />
           <Route path="/admin/edit/:id" element={<AdminProductForm />} />

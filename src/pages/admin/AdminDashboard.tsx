@@ -74,7 +74,7 @@ export default function AdminDashboard() {
         + Add new piece
       </Link>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <Link
           to="/admin/analytics"
           className="rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-sm font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
@@ -86,6 +86,12 @@ export default function AdminDashboard() {
           className="rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-sm font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
         >
           🔀 Ordering
+        </Link>
+        <Link
+          to="/admin/notify"
+          className="rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-sm font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
+        >
+          🔔 Notify
         </Link>
         <Link
           to="/admin/settings"

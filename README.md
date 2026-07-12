@@ -79,8 +79,10 @@ environment variables in the project settings: `VITE_SUPABASE_URL`,
 `VITE_SUPABASE_ANON_KEY`, `VITE_WHATSAPP_NUMBER`, `VITE_ADMIN_EMAIL` (must
 match the value used with `admin:create`), and `GEMINI_API_KEY` (server-side,
 for the AI suggestion function — key from https://aistudio.google.com/apikey).
-`SUPABASE_DB_URL` and the service-role key are only needed where you run the
-scripts, not in Vercel. Remember: changing env vars requires a redeploy.
+For push notifications also set `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+`VAPID_SUBJECT`, and `SUPABASE_SERVICE_ROLE_KEY` (see below). `SUPABASE_DB_URL`
+is only needed where you run the scripts, not in Vercel. Remember: changing env
+vars requires a redeploy.
 Every push to the production branch auto-deploys. `vercel.json` contains the
 SPA rewrite (which excludes `/api/*` so the serverless function works).
 
@@ -91,6 +93,31 @@ a Vercel serverless function that calls Gemini with `GEMINI_API_KEY` — the
 key never reaches the browser. Under `npm run dev` there is no function
 runtime; set `VITE_GEMINI_API_KEY` in your local `.env` if you want the
 button to work in local development (never set that variable in Vercel).
+
+### Push notifications
+
+The admin can push an update — new additions, sale pieces, or a named
+collection — to everyone who opted in, from `/admin` → Notify. Each preset
+fills the copy and a deep link that opens the matching pieces (`/?hl=new`,
+`/?hl=sale`, `/?hl=c:<collection>`), and you can attach a piece's photo.
+Sending is a two-step in-page confirm (no accidental blasts). Customers see a
+gentle one-tap opt-in only after browsing ~2 pieces; the browser permission
+prompt still gates it, so it can't be forced. Notifications arrive even when
+the shop isn't open in a tab (on iOS, only for an installed/Add-to-Home-Screen
+PWA on 16.4+).
+
+Setup:
+
+1. Generate a VAPID key pair: `npx web-push generate-vapid-keys`.
+2. In Vercel set `VITE_VAPID_PUBLIC_KEY` (public half), `VAPID_PRIVATE_KEY`
+   (private half), and optionally `VAPID_SUBJECT` (a `mailto:`). The
+   subscribe/send functions also need `SUPABASE_SERVICE_ROLE_KEY`.
+3. Run the migration that adds the `push_subscriptions` table: `npm run db:migrate`.
+
+Two serverless functions back this: `api/subscribe.ts` stores a browser's
+push endpoint (open, but only ever writes an opaque endpoint), and
+`api/send-push.ts` fans a message out — gated to the admin (it verifies the
+caller's Supabase session token) and prunes expired endpoints as it goes.
 
 ## Analytics & privacy
 
@@ -117,6 +144,6 @@ variant needs ~20% padding around the badge).
 
 ## Roadmap
 
-Later phases from the design doc: filters/search, wishlist, recently viewed,
-festive banner, push notifications, collections, inventory counts, CSV
-export, LLM-assisted tagging.
+Later phases from the design doc: recently viewed, festive banner, inventory
+counts, CSV export, LLM-assisted tagging. (Filters/search, wishlist,
+collections, and push notifications are now in.)

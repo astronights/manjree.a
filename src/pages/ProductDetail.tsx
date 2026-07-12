@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { formatPrice, whatsappLink, shop } from '../config'
 import { getProduct, isNew } from '../lib/store'
 import { recordEvent, recordViewOnce } from '../lib/analytics'
+import { notePieceViewed } from '../lib/push'
 import { enquiredAt, markEnquired } from '../lib/enquiries'
 import { isFavorite, toggleFavorite } from '../lib/favorites'
 import { HeartIcon } from '../components/ProductCard'
@@ -33,7 +34,10 @@ export default function ProductDetail() {
   }, [id])
 
   useEffect(() => {
-    if (product && !product.is_draft) recordViewOnce(product.id)
+    if (product && !product.is_draft) {
+      recordViewOnce(product.id)
+      notePieceViewed(product.id)
+    }
   }, [product])
 
   if (product === undefined) {

@@ -1,6 +1,6 @@
 // Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
-// v4 — admin title as notification title; badge removed (full-colour icon renders as broken ring)
+// v5 — proper monochrome badge (white M lettermark SVG)
 
 // Take over immediately whenever a new version installs — no need to close all tabs.
 self.addEventListener('install', () => self.skipWaiting())
@@ -58,15 +58,13 @@ self.addEventListener('push', (event) => {
   } catch {
     data = {}
   }
-  // Use the admin's headline as the bold notification title.
-  // Android Chrome automatically shows "Manjree's" (the PWA name) in the
-  // notification header row — it acts as the source label, so no need to
-  // hardcode it in the title. badge is intentionally omitted: the full-colour
-  // icon renders as a broken empty ring when Chrome scales it down to badge size.
+  // Admin's headline is the bold notification title.
+  // Android Chrome auto-shows "Manjree's" (PWA name) in the header row.
   const title = data.title || "Manjree's"
   const options = {
     body: data.body || '',
     icon: '/icon-192.png',
+    badge: '/badge-96.svg',
     image: data.image || undefined,
     data: { url: data.url || '/' },
     tag: data.tag || 'manjrees',

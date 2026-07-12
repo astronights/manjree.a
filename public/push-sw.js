@@ -1,6 +1,10 @@
 // Push + cover-image cache handlers layered onto the generated Workbox SW via
 // workbox.importScripts (see vite.config.ts). Plain JS, no build step.
-// v2 — title always "Manjree's"; admin headline+body merged into notification body
+// v3 — force-activate via skipWaiting so every device picks up changes immediately
+
+// Take over immediately whenever a new version installs — no need to close all tabs.
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 
 const COVER_CACHE = 'product-covers'
 

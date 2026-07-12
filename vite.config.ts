@@ -27,7 +27,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // Layer the push/notificationclick handlers onto the generated SW.
-        importScripts: ['push-sw.js'],
+        // ?v= busts the browser's importScripts cache whenever push-sw.js changes.
+        importScripts: ['push-sw.js?v=2'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

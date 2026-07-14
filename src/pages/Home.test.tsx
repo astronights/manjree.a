@@ -18,12 +18,13 @@ async function ready() {
 }
 
 describe('Home', () => {
-  it('defaults to New Arrivals, showing only current new pieces', async () => {
+  it('defaults to Everything with hide-seen enabled on fresh load', async () => {
     renderHome()
     await ready()
-    expect(screen.getByLabelText('Highlights')).toHaveValue('new')
+    expect(screen.getByLabelText('Highlights')).toHaveValue('all')
+    // hideSeen is on but nothing has been viewed in a fresh test env, so all pieces show
     const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
-    expect(titles).toEqual(['Marigold Anarkali Kurti', 'Fuchsia Chanderi Suit Set'])
+    expect(titles).toHaveLength(5)
   })
 
   it('shows everything (smart-ordered, sold-out last) under Everything', async () => {

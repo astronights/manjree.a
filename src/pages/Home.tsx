@@ -91,10 +91,8 @@ export default function Home() {
     listProducts()
       .then((list) => {
         setProducts(list)
-        if (!searchParams.get('hl')) {
-          const someNew = list.some(isNew)
-          setHighlight(someNew ? 'new' : 'all')
-          if (someNew) setFilters((f) => ({ ...f, hideSeen: true }))
+        if (!searchParams.get('hl') && !searchParams.get('hs')) {
+          setFilters((f) => ({ ...f, hideSeen: true }))
         }
         // Ask the service worker to cache only cover photos (not gallery images).
         if ('serviceWorker' in navigator) {

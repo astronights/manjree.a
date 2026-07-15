@@ -21,13 +21,6 @@ const FILTER_KIND_LABELS: [FilterKind, string][] = [
   ['sort', 'Sort choices'],
 ]
 
-function relativeDay(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-  if (days === 0) return 'today'
-  if (days === 1) return 'yesterday'
-  return `${days} days ago`
-}
-
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -433,6 +426,17 @@ export default function AdminAnalytics() {
 
   const hasChartData = chartStats.some((d) => d.views > 0 || d.enquiries > 0 || d.subscribers > 0)
 
+  // Devices that have activity on more than one calendar day.
+  const returningVisitors = useMemo(() => {
+    const deviceDays = new Map<string, Set<string>>()
+    for (const e of rawEvents) {
+      const day = e.created_at.slice(0, 10)
+      if (!deviceDays.has(e.device_id)) deviceDays.set(e.device_id, new Set())
+      deviceDays.get(e.device_id)!.add(day)
+    }
+    return [...deviceDays.values()].filter((days) => days.size > 1).length
+  }, [rawEvents])
+
   if (error) {
     return <p className="p-8 text-center text-base text-bougainvillea-500">Could not load analytics: {error}</p>
   }
@@ -443,6 +447,7 @@ export default function AdminAnalytics() {
   const { totals, byProduct, byDevice } = data
   const maxViews = Math.max(1, ...byProduct.map((r) => r.views))
   const funnel = computeFunnel(byDevice)
+
   const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0)
   const funnelRows: [string, number, string][] = [
     ['Visited the shop', funnel.devices, ''],
@@ -457,10 +462,11 @@ export default function AdminAnalytics() {
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Analytics</h1>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatTile label="Piece views" value={totals.views} />
         <StatTile label="WhatsApp enquiries" value={totals.enquiries} />
-        <StatTile label="Devices" value={totals.devices} />
+        <StatTile label="Unique devices" value={totals.devices} />
+        <StatTile label="Returning visitors" value={returningVisitors} />
         <StatTile label="Notification opt-ins" value={subscribers ?? 0} />
       </div>
 
@@ -608,30 +614,6 @@ export default function AdminAnalytics() {
             </section>
           )}
 
-          <section className="mt-7">
-            <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
-              Activity by device
-            </h2>
-            <p className="text-sm text-night-700/80 dark:text-cream-300/60">
-              Customers don't log in — each browser gets an anonymous id, so one person can appear as
-              two devices (e.g. phone and laptop).
-            </p>
-            <ul className="mt-3 space-y-2">
-              {byDevice.map((d) => (
-                <li
-                  key={d.deviceId}
-                  className="flex items-center justify-between gap-3 rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"
-                >
-                  <span className="font-mono text-sm text-night-700 dark:text-cream-200">
-                    {d.deviceId.slice(0, 8)}
-                  </span>
-                  <span className="text-sm tabular-nums text-night-700/85 dark:text-cream-300/70">
-                    {d.views} views · {d.enquiries} enquiries · {relativeDay(d.lastActive)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
         </>
       )}
     </main>

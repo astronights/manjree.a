@@ -28,6 +28,7 @@ export default function App() {
       <PushOptIn />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/install" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<AdminGuard />}>

@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { shop } from '../config'
+import InstallGuide from './InstallGuide'
 import SettingsSheet from './SettingsSheet'
 
 function GearIcon() {
@@ -39,6 +40,19 @@ function InstagramIcon() {
 
 export default function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [installOpen, setInstallOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (location.pathname === '/install') setInstallOpen(true)
+  }, [location.pathname])
+
+  const handleInstallClose = () => {
+    setInstallOpen(false)
+    if (location.pathname === '/install') navigate('/', { replace: true })
+  }
+
   return (
     <>
       <header className="sticky top-0 z-20 border-b border-cream-300/60 bg-cream-100/90 backdrop-blur dark:border-night-700 dark:bg-night-900/90">
@@ -87,7 +101,12 @@ export default function Header() {
           </div>
         </div>
       </header>
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onGetApp={() => setInstallOpen(true)}
+      />
+      <InstallGuide open={installOpen} onClose={handleInstallClose} />
     </>
   )
 }

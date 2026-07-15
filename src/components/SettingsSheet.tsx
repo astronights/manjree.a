@@ -97,9 +97,10 @@ function Toggle({
 interface Props {
   open: boolean
   onClose: () => void
+  onGetApp?: () => void
 }
 
-export default function SettingsSheet({ open, onClose }: Props) {
+export default function SettingsSheet({ open, onClose, onGetApp }: Props) {
   const { theme, setMode } = useTheme()
 
   const [permission, setPermission] = useState<PushPermission>('unsupported')
@@ -226,6 +227,29 @@ export default function SettingsSheet({ open, onClose }: Props) {
                   />
                 )}
               </div>
+            </>
+          )}
+
+          {onGetApp && (
+            <>
+              <div className="border-t border-cream-200 dark:border-night-700" />
+              <button
+                onClick={() => { onClose(); onGetApp() }}
+                className="flex w-full items-center justify-between gap-4 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cream-200 text-night-700 dark:bg-night-800 dark:text-cream-300">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="5" y="2" width="14" height="20" rx="2" />
+                      <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-night-800 dark:text-cream-100">Get the App</span>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-night-700/40 dark:text-cream-300/40">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
             </>
           )}
         </div>

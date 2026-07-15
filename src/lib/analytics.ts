@@ -195,17 +195,20 @@ export interface DayStat {
   subscribers: number // new opt-ins on that day
 }
 
+// startDate and endDate are YYYY-MM-DD strings, both inclusive.
 export function summarizeByDay(
   events: AnalyticsEvent[],
   subDates: string[],
-  numDays = 30,
+  startDate: string,
+  endDate: string,
 ): DayStat[] {
   const byDate = new Map<string, DayStat>()
-  for (let i = numDays - 1; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    const date = d.toISOString().slice(0, 10)
+  const cur = new Date(startDate + 'T00:00:00')
+  const end = new Date(endDate + 'T00:00:00')
+  while (cur <= end) {
+    const date = cur.toISOString().slice(0, 10)
     byDate.set(date, { date, views: 0, enquiries: 0, subscribers: 0 })
+    cur.setDate(cur.getDate() + 1)
   }
   for (const e of events) {
     const day = byDate.get(e.created_at.slice(0, 10))

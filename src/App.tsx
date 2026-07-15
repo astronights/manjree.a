@@ -1,14 +1,20 @@
 import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
+import { shop } from './config'
+import Header from './components/Header'
+import PushOptIn from './components/PushOptIn'
+import { isSupabaseMode } from './lib/store'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return null
 }
-import Header from './components/Header'
-import PushOptIn from './components/PushOptIn'
-import { isSupabaseMode } from './lib/store'
+
+function ChatRedirect() {
+  useEffect(() => { window.location.href = `https://wa.me/${shop.whatsappNumber}` }, [])
+  return <p className="p-8 text-center text-sm text-night-700/80 dark:text-cream-300/60">Opening WhatsApp…</p>
+}
 import Home from './pages/Home'
 import ProductDetail from './pages/ProductDetail'
 import AdminGuard from './pages/admin/AdminGuard'
@@ -37,6 +43,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/install" element={<Home />} />
+        <Route path="/chat" element={<ChatRedirect />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<AdminGuard />}>

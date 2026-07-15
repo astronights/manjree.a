@@ -257,7 +257,7 @@ export default function InstallGuide({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Add to Home Screen guide"
-        className={`fixed inset-x-0 bottom-0 z-[60] max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-cream-50 shadow-2xl transition-transform duration-300 ease-out dark:border-t dark:border-night-700 dark:bg-night-900 ${
+        className={`fixed bottom-0 left-0 right-0 z-[60] max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-cream-50 shadow-2xl transition-transform duration-300 ease-out dark:border-t dark:border-night-700 dark:bg-night-900 sm:left-1/2 sm:right-auto sm:w-full sm:max-w-lg sm:-translate-x-1/2 ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >

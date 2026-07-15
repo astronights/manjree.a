@@ -73,15 +73,13 @@ export default function Header() {
             </span>
           </Link>
           <div className="flex items-center gap-1">
-            <a
-              href={`https://wa.me/${shop.whatsappNumber}`}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/chat"
               aria-label="WhatsApp"
               className="rounded-full p-2 text-night-700 hover:bg-cream-200 dark:text-cream-200 dark:hover:bg-night-800"
             >
               <WhatsAppIcon />
-            </a>
+            </Link>
             <a
               href={shop.instagram}
               target="_blank"

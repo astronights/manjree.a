@@ -27,9 +27,9 @@ export function whatsappLink(product: Product, size?: string): string {
   if (product.stock_status === 'sold_out') {
     opener = `Hi! I love *${product.title}* (Ref: ${ref}) but it shows as sold out. Could you let me know when it's back in stock?`
   } else if (product.stock_status === 'on_order') {
-    opener = `Hi! I'd like to order *${product.title}* (Ref: ${ref})${sizeNote}. What's the lead time?`
+    opener = `Hi Manjree! I'd like to order *${product.title}* (Ref: ${ref})${sizeNote}. What's the lead time?`
   } else {
-    opener = `Hi! I'd like to order *${product.title}* (Ref: ${ref})${sizeNote}. Is it available?`
+    opener = `Hi Manjree! I'd like to order *${product.title}* (Ref: ${ref})${sizeNote}. Is it available?`
   }
   const lines = [opener, `${window.location.origin}/product/${product.id}`]
   return `https://wa.me/${shop.whatsappNumber}?text=${encodeURIComponent(lines.join('\n'))}`

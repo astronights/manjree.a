@@ -125,11 +125,11 @@ function ChromeMenuIllustration() {
       <text x="18" y="76" fill="#3c4043" fontSize="14"
         fontFamily="system-ui,-apple-system,sans-serif">History</text>
       <line x1="0" y1="90" x2="230" y2="90" stroke="#e0e0e0" strokeWidth="0.5" />
-      {/* Add to Home Screen – highlighted */}
+      {/* Install app – highlighted */}
       <rect x="0" y="90" width="230" height="40" rx="0" fill="#fef9ee" />
       <path d="M0 90 h230 v26 q0 14 -8 14 h-214 q-8 0 -8 -14 Z" fill="#fef9ee" />
       <text x="18" y="114" fill="#1c1917" fontSize="14" fontWeight="600"
-        fontFamily="system-ui,-apple-system,sans-serif">Add to Home Screen</text>
+        fontFamily="system-ui,-apple-system,sans-serif">Install app</text>
     </svg>
   )
 }
@@ -213,8 +213,8 @@ function AndroidSteps() {
         <ChromeBarIllustration />
       </StepCard>
 
-      <StepCard number={2} title='Tap "Add to Home Screen"'
-        description='Choose "Add to Home Screen" from the menu. You might see "Install App" instead — both work. Tap "Add" to confirm.'>
+      <StepCard number={2} title='Tap "Install app"'
+        description='Tap "Install app" from the menu — this gives you the full app experience. If you see "Add to Home Screen" or "Create shortcut" instead, those work too but open inside the browser.'>
         <ChromeMenuIllustration />
       </StepCard>
     </>

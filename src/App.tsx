@@ -1,4 +1,11 @@
-import { Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import Header from './components/Header'
 import PushOptIn from './components/PushOptIn'
 import { isSupabaseMode } from './lib/store'
@@ -16,6 +23,7 @@ import AdminSettings from './pages/admin/AdminSettings'
 export default function App() {
   return (
     <div className="min-h-dvh bg-cream-100 text-night-800 dark:bg-night-900 dark:text-cream-100">
+      <ScrollToTop />
       <Header />
       {!isSupabaseMode && (
         // Backend not configured (VITE_SUPABASE_* missing at build time). Loud

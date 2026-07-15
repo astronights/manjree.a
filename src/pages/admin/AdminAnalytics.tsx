@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { computeFunnel, fetchEvents, summarize, summarizeFilters } from '../../lib/analytics'
-import type { FilterStat, Summary } from '../../lib/analytics'
+import {
+  computeFunnel,
+  fetchEvents,
+  summarize,
+  summarizeByDay,
+  summarizeFilters,
+} from '../../lib/analytics'
+import type { DayStat, FilterStat, Summary } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
-import type { FilterKind } from '../../types'
+import type { AnalyticsEvent, FilterKind, Product } from '../../types'
 
 const FILTER_KIND_LABELS: [FilterKind, string][] = [
   ['search', 'Top searches'],
@@ -31,26 +37,381 @@ function StatTile({ label, value }: { label: string; value: number }) {
   )
 }
 
+// ── Daily Activity Chart ──────────────────────────────────────────────────────
+
+const CHART_SERIES = [
+  { key: 'views' as const, label: 'Views', lightHex: '#2a78d6', darkHex: '#3987e5' },
+  { key: 'enquiries' as const, label: 'Enquiries', lightHex: '#e87ba4', darkHex: '#d55181' },
+  { key: 'subscribers' as const, label: 'New opt-ins', lightHex: '#008300', darkHex: '#008300' },
+]
+
+interface DailyChartProps {
+  stats: DayStat[]
+  piecesPerDay: number[]
+}
+
+function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [tooltip, setTooltip] = useState<{
+    x: number
+    y: number
+    idx: number
+  } | null>(null)
+
+  const PAD = { top: 16, right: 16, bottom: 40, left: 36 }
+  const W = 700
+  const H = 220
+  const plotW = W - PAD.left - PAD.right
+  const plotH = H - PAD.top - PAD.bottom
+
+  const maxEvent = Math.max(
+    1,
+    ...stats.flatMap((d) => [d.views, d.enquiries, d.subscribers]),
+  )
+  const maxPieces = Math.max(1, ...piecesPerDay)
+
+  const n = stats.length
+
+  function xOf(i: number) {
+    return PAD.left + (i / Math.max(n - 1, 1)) * plotW
+  }
+  function yOfEvent(v: number) {
+    return PAD.top + plotH - (v / maxEvent) * plotH
+  }
+  function yOfPieces(v: number) {
+    return PAD.top + plotH - (v / maxPieces) * plotH
+  }
+
+  function polyline(values: number[], yFn: (v: number) => number) {
+    return values
+      .map((v, i) => `${xOf(i).toFixed(1)},${yFn(v).toFixed(1)}`)
+      .join(' ')
+  }
+
+  // X-axis tick labels: show ~6 evenly spaced dates
+  const tickIdxs = [0, Math.floor(n / 5), Math.floor((2 * n) / 5), Math.floor((3 * n) / 5), Math.floor((4 * n) / 5), n - 1]
+  const uniqueTicks = [...new Set(tickIdxs)]
+
+  function fmtDate(iso: string) {
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  }
+
+  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const svgX = ((e.clientX - rect.left) / rect.width) * W
+    const plotX = svgX - PAD.left
+    const idx = Math.round((plotX / plotW) * (n - 1))
+    if (idx < 0 || idx >= n) {
+      setTooltip(null)
+      return
+    }
+    setTooltip({ x: xOf(idx), y: e.clientY - rect.top, idx })
+  }
+
+  const tip = tooltip !== null ? tooltip : null
+  const tipData = tip !== null ? stats[tip.idx] : null
+  const tipPieces = tip !== null ? piecesPerDay[tip.idx] : null
+
+  // Determine tooltip horizontal position so it doesn't overflow
+  const tipLeft = tip
+    ? tip.x > W * 0.65
+      ? 'auto'
+      : `${tip.x + 12}px`
+    : '0'
+  const tipRight = tip
+    ? tip.x > W * 0.65
+      ? `${W - tip.x + 12}px`
+      : 'auto'
+    : 'auto'
+
+  return (
+    <div className="mnj-chart relative rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
+      {/* CSS var definitions — both light and dark */}
+      <style>{`
+        .mnj-chart {
+          --c-views-l: #2a78d6; --c-views-d: #3987e5;
+          --c-enq-l:   #e87ba4; --c-enq-d:   #d55181;
+          --c-sub-l:   #008300; --c-sub-d:   #008300;
+          --c-pieces-l: #898781; --c-pieces-d: #898781;
+          --c-grid-l:  #e1e0d9; --c-grid-d:  #2c2c2a;
+          --c-axis-l:  #c3c2b7; --c-axis-d:  #383835;
+          --c-text-l:  #52514e; --c-text-d:  #c3c2b7;
+
+          --c-views:   var(--c-views-l);
+          --c-enq:     var(--c-enq-l);
+          --c-sub:     var(--c-sub-l);
+          --c-pieces:  var(--c-pieces-l);
+          --c-grid:    var(--c-grid-l);
+          --c-axis:    var(--c-axis-l);
+          --c-ink:     var(--c-text-l);
+        }
+        @media (prefers-color-scheme: dark) {
+          :root:where(:not([data-theme="light"])) .mnj-chart {
+            --c-views:  var(--c-views-d);
+            --c-enq:    var(--c-enq-d);
+            --c-sub:    var(--c-sub-d);
+            --c-pieces: var(--c-pieces-d);
+            --c-grid:   var(--c-grid-d);
+            --c-axis:   var(--c-axis-d);
+            --c-ink:    var(--c-text-d);
+          }
+        }
+        :root[data-theme="dark"] .mnj-chart {
+          --c-views:  var(--c-views-d);
+          --c-enq:    var(--c-enq-d);
+          --c-sub:    var(--c-sub-d);
+          --c-pieces: var(--c-pieces-d);
+          --c-grid:   var(--c-grid-d);
+          --c-axis:   var(--c-axis-d);
+          --c-ink:    var(--c-text-d);
+        }
+      `}</style>
+
+      <div className="overflow-x-auto">
+        <div style={{ minWidth: '480px', position: 'relative' }}>
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            style={{ display: 'block', overflow: 'visible' }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setTooltip(null)}
+            aria-label="Daily activity line chart"
+            role="img"
+          >
+            {/* Gridlines */}
+            {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+              const y = PAD.top + t * plotH
+              const v = Math.round(maxEvent * (1 - t))
+              return (
+                <g key={t}>
+                  <line
+                    x1={PAD.left}
+                    y1={y}
+                    x2={PAD.left + plotW}
+                    y2={y}
+                    stroke="var(--c-grid)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={PAD.left - 6}
+                    y={y + 4}
+                    textAnchor="end"
+                    fontSize="10"
+                    fill="var(--c-ink)"
+                    style={{ fontFamily: 'system-ui,-apple-system,"Segoe UI",sans-serif' }}
+                  >
+                    {v}
+                  </text>
+                </g>
+              )
+            })}
+
+            {/* X axis baseline */}
+            <line
+              x1={PAD.left}
+              y1={PAD.top + plotH}
+              x2={PAD.left + plotW}
+              y2={PAD.top + plotH}
+              stroke="var(--c-axis)"
+              strokeWidth="1"
+            />
+
+            {/* X tick labels */}
+            {uniqueTicks.map((i) => (
+              <text
+                key={i}
+                x={xOf(i)}
+                y={PAD.top + plotH + 14}
+                textAnchor="middle"
+                fontSize="10"
+                fill="var(--c-ink)"
+                style={{ fontFamily: 'system-ui,-apple-system,"Segoe UI",sans-serif' }}
+              >
+                {fmtDate(stats[i].date)}
+              </text>
+            ))}
+
+            {/* Pieces reference line (dashed, muted) */}
+            {piecesPerDay.length === n && (
+              <polyline
+                points={polyline(piecesPerDay, yOfPieces)}
+                fill="none"
+                stroke="var(--c-pieces)"
+                strokeWidth="1.5"
+                strokeDasharray="4 3"
+              />
+            )}
+
+            {/* Event series lines */}
+            {CHART_SERIES.map(({ key, label }) => (
+              <polyline
+                key={key}
+                points={polyline(
+                  stats.map((d) => d[key]),
+                  yOfEvent,
+                )}
+                fill="none"
+                stroke={`var(--c-${key === 'views' ? 'views' : key === 'enquiries' ? 'enq' : 'sub'})`}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                aria-label={label}
+              />
+            ))}
+
+            {/* Crosshair + dots */}
+            {tip !== null && (
+              <>
+                <line
+                  x1={tip.x}
+                  y1={PAD.top}
+                  x2={tip.x}
+                  y2={PAD.top + plotH}
+                  stroke="var(--c-axis)"
+                  strokeWidth="1"
+                  strokeDasharray="3 2"
+                />
+                {CHART_SERIES.map(({ key }) => (
+                  <circle
+                    key={key}
+                    cx={tip.x}
+                    cy={yOfEvent(stats[tip.idx][key])}
+                    r="4"
+                    fill={`var(--c-${key === 'views' ? 'views' : key === 'enquiries' ? 'enq' : 'sub'})`}
+                    stroke="var(--c-grid)"
+                    strokeWidth="1.5"
+                  />
+                ))}
+                {piecesPerDay.length === n && (
+                  <circle
+                    cx={tip.x}
+                    cy={yOfPieces(piecesPerDay[tip.idx])}
+                    r="3.5"
+                    fill="var(--c-pieces)"
+                    stroke="var(--c-grid)"
+                    strokeWidth="1.5"
+                  />
+                )}
+              </>
+            )}
+          </svg>
+
+          {/* Tooltip */}
+          {tip !== null && tipData !== null && (
+            <div
+              style={{
+                position: 'absolute',
+                top: Math.max(0, (tip.y / H) * 100 - 5) + '%',
+                left: tipLeft,
+                right: tipRight,
+                pointerEvents: 'none',
+                zIndex: 10,
+              }}
+              className="w-44 rounded-xl bg-white/95 p-2.5 shadow-lg ring-1 ring-cream-300/60 dark:bg-night-900/95 dark:ring-night-700"
+            >
+              <p className="mb-1.5 text-xs font-medium text-night-800 dark:text-cream-100">
+                {fmtDate(tipData.date)}
+              </p>
+              {CHART_SERIES.map(({ key, label }) => (
+                <div key={key} className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-night-700/80 dark:text-cream-300/60">{label}</span>
+                  <span className="text-xs tabular-nums text-night-800 dark:text-cream-100">
+                    {tipData[key]}
+                  </span>
+                </div>
+              ))}
+              {tipPieces !== null && (
+                <div className="flex items-center justify-between gap-2 border-t border-cream-200 pt-1 dark:border-night-700">
+                  <span className="text-xs text-night-700/80 dark:text-cream-300/60">Pieces</span>
+                  <span className="text-xs tabular-nums text-night-800 dark:text-cream-100">
+                    {tipPieces}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Legend — required: magenta (enquiries) is sub-3:1 on light surface */}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+        {CHART_SERIES.map(({ key, label, lightHex, darkHex }) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-6 rounded-sm"
+              style={
+                {
+                  background: lightHex,
+                  '--dk': darkHex,
+                } as React.CSSProperties
+              }
+            />
+            <span className="text-xs text-night-700/80 dark:text-cream-300/60">{label}</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-0.5 w-6 rounded-sm bg-[#898781]" style={{ borderTop: '1.5px dashed #898781' }} />
+          <span className="text-xs text-night-700/80 dark:text-cream-300/60">Pieces in catalog</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function AdminAnalytics() {
   const [data, setData] = useState<Summary | null>(null)
   const [filterStats, setFilterStats] = useState<Map<FilterKind, FilterStat[]>>(new Map())
   const [subscribers, setSubscribers] = useState<number | null>(null)
+  const [rawEvents, setRawEvents] = useState<AnalyticsEvent[]>([])
+  const [subDates, setSubDates] = useState<string[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([fetchEvents(), listProducts({ includeDrafts: true })])
       .then(([events, products]) => {
+        setRawEvents(events)
+        setAllProducts(products)
         setData(summarize(events, products))
         setFilterStats(summarizeFilters(events))
       })
       .catch((e: Error) => setError(e.message))
+
     if (supabase) {
       supabase
         .from('push_subscriptions')
-        .select('*', { count: 'exact', head: true })
-        .then(({ count }) => setSubscribers(count ?? 0))
+        .select('created_at')
+        .then(({ data: rows, count }) => {
+          setSubscribers(count ?? (rows?.length ?? 0))
+          setSubDates((rows ?? []).map((r: { created_at: string }) => r.created_at))
+        })
     }
   }, [])
+
+  const dailyStats = useMemo(
+    () => summarizeByDay(rawEvents, subDates, 30),
+    [rawEvents, subDates],
+  )
+
+  const piecesByDay = useMemo(
+    () =>
+      dailyStats.map(
+        (d) =>
+          allProducts.filter(
+            (p) => !p.is_draft && (p.created_at ?? '').slice(0, 10) <= d.date,
+          ).length,
+      ),
+    [dailyStats, allProducts],
+  )
+
+  const hasChartData = dailyStats.some(
+    (d) => d.views > 0 || d.enquiries > 0 || d.subscribers > 0,
+  )
 
   if (error) {
     return <p className="p-8 text-center text-base text-bougainvillea-500">Could not load analytics: {error}</p>
@@ -82,6 +443,18 @@ export default function AdminAnalytics() {
         <StatTile label="Devices" value={totals.devices} />
         <StatTile label="Notification opt-ins" value={subscribers ?? 0} />
       </div>
+
+      {hasChartData && (
+        <section className="mt-7">
+          <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
+            Daily activity — last 30 days
+          </h2>
+          <p className="mb-3 text-sm text-night-700/80 dark:text-cream-300/60">
+            Views, enquiries, and new notification opt-ins per day, alongside pieces in the catalog.
+          </p>
+          <DailyChart stats={dailyStats} piecesPerDay={piecesByDay} />
+        </section>
+      )}
 
       {byProduct.length === 0 && filterStats.size === 0 ? (
         <p className="py-16 text-center text-base text-night-700/80 dark:text-cream-300/60">

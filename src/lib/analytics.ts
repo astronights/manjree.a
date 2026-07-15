@@ -188,6 +188,39 @@ export async function fetchEngagement(sinceDays = 30): Promise<Engagement> {
   return score
 }
 
+export interface DayStat {
+  date: string // YYYY-MM-DD
+  views: number
+  enquiries: number
+  subscribers: number // new opt-ins on that day
+}
+
+export function summarizeByDay(
+  events: AnalyticsEvent[],
+  subDates: string[],
+  numDays = 30,
+): DayStat[] {
+  const byDate = new Map<string, DayStat>()
+  for (let i = numDays - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const date = d.toISOString().slice(0, 10)
+    byDate.set(date, { date, views: 0, enquiries: 0, subscribers: 0 })
+  }
+  for (const e of events) {
+    const day = byDate.get(e.created_at.slice(0, 10))
+    if (!day) continue
+    if (e.event_type === 'view') day.views++
+    else if (e.event_type === 'enquiry') day.enquiries++
+  }
+  for (const dt of subDates) {
+    if (typeof dt !== 'string') continue
+    const day = byDate.get(dt.slice(0, 10))
+    if (day) day.subscribers++
+  }
+  return [...byDate.values()]
+}
+
 export interface FilterStat {
   value: string
   count: number

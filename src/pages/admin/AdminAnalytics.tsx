@@ -88,12 +88,14 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
     return values.map((v, i) => `${xOf(i).toFixed(1)},${yFn(v).toFixed(1)}`).join(' ')
   }
 
-  // ~6 evenly spaced x-axis labels
-  const tickCount = Math.min(n, 6)
-  const tickIdxs = Array.from({ length: tickCount }, (_, k) =>
-    Math.round((k / (tickCount - 1)) * (n - 1)),
-  )
-  const uniqueTicks = [...new Set(tickIdxs)]
+  // Up to 7 evenly-spaced x-axis tick indices, guarded against n≤1.
+  const maxTicks = Math.min(n, 7)
+  const uniqueTicks =
+    maxTicks <= 1
+      ? n > 0 ? [0] : []
+      : Array.from({ length: maxTicks }, (_, k) =>
+          Math.round((k / (maxTicks - 1)) * (n - 1)),
+        )
 
   // Y-axis: 5 gridlines at 0%, 25%, 50%, 75%, 100%
   const yGridLines = [0, 0.25, 0.5, 0.75, 1]
@@ -124,24 +126,16 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
     <div className="mnj-chart rounded-2xl bg-cream-50 p-4 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
       <style>{`
         .mnj-chart {
-          --c-views:   #2a78d6; --c-enq: #e87ba4; --c-sub: #008300;
-          --c-pieces:  #52514e;
-          --c-grid:    #e1e0d9; --c-axis: #c3c2b7;
-          --c-tick:    #0b0b0b;
+          --c-views:  #2a78d6; --c-enq: #e87ba4; --c-sub: #008300;
+          --c-pieces: #52514e;
+          --c-grid:   #e1e0d9; --c-axis: #c3c2b7;
+          --c-tick:   #2a251e;
         }
-        @media (prefers-color-scheme: dark) {
-          :root:where(:not([data-theme="light"])) .mnj-chart {
-            --c-views:  #3987e5; --c-enq: #d55181; --c-sub: #008300;
-            --c-pieces: #c3c2b7;
-            --c-grid:   #2c2c2a; --c-axis: #383835;
-            --c-tick:   #ffffff;
-          }
-        }
-        :root[data-theme="dark"] .mnj-chart {
+        .dark .mnj-chart {
           --c-views:  #3987e5; --c-enq: #d55181; --c-sub: #008300;
           --c-pieces: #c3c2b7;
           --c-grid:   #2c2c2a; --c-axis: #383835;
-          --c-tick:   #ffffff;
+          --c-tick:   #faf6ee;
         }
       `}</style>
 

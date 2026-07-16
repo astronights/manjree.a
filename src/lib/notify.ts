@@ -1,7 +1,7 @@
 // Notification presets: each type fills default copy and the deep link the
 // notification opens (mirrors the customer catalog's Highlights params).
 
-export type NotifyType = 'new' | 'sale' | 'collection'
+export type NotifyType = 'all' | 'new' | 'sale' | 'collection'
 
 export interface NotifyDraft {
   title: string
@@ -11,6 +11,12 @@ export interface NotifyDraft {
 
 export function notifyDefaults(type: NotifyType, collection?: string): NotifyDraft {
   switch (type) {
+    case 'all':
+      return {
+        title: "New pieces at Manjree's 🌸",
+        body: 'Check out what\'s new in the collection.',
+        url: '/',
+      }
     case 'sale':
       return {
         title: 'New pieces on sale 🏷️',

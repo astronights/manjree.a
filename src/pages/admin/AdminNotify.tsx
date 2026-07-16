@@ -9,6 +9,7 @@ import type { NotifyType } from '../../lib/notify'
 import type { Product } from '../../types'
 
 const TYPES: { value: NotifyType; label: string; hint: string }[] = [
+  { value: 'all', label: 'Everything', hint: 'General update for the whole collection' },
   { value: 'new', label: 'New additions', hint: 'Latest pieces just added' },
   { value: 'sale', label: 'New sale pieces', hint: 'Fresh markdowns' },
   { value: 'collection', label: 'A collection', hint: 'New in a named collection' },
@@ -22,7 +23,7 @@ function httpCover(images: string[]): string | undefined {
 }
 
 export default function AdminNotify() {
-  const [type, setType] = useState<NotifyType>('new')
+  const [type, setType] = useState<NotifyType>('all')
   const [collection, setCollection] = useState('')
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -72,7 +73,8 @@ export default function AdminNotify() {
     const match = (p: Product) => {
       if (type === 'sale') return onSale(p)
       if (type === 'new') return isNew(p)
-      return collection ? p.collection === collection : true
+      if (type === 'collection') return collection ? p.collection === collection : true
+      return true // 'all' — show everything
     }
     const relevant = products.filter(match)
     const source = relevant.length ? relevant : products
@@ -139,7 +141,7 @@ export default function AdminNotify() {
           {/* What kind of update */}
           <div className="mt-5">
             <label className="text-base font-medium text-night-800 dark:text-cream-100">What’s the update?</label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {TYPES.map((t) => (
                 <button
                   key={t.value}

@@ -30,7 +30,7 @@ export function notifyDefaults(type: NotifyType, collection?: string): NotifyDra
       return {
         title: 'New arrivals just dropped ✨',
         body: 'Be the first to see the latest pieces.',
-        url: '/?hl=new',
+        url: '/',
       }
   }
 }

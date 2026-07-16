@@ -1,9 +1,9 @@
 import { notifyDefaults } from './notify'
 
 describe('notifyDefaults', () => {
-  it('deep-links "new" arrivals to the New highlight', () => {
+  it('links "new" arrivals to the root (no highlight filter)', () => {
     const d = notifyDefaults('new')
-    expect(d.url).toBe('/?hl=new')
+    expect(d.url).toBe('/')
     expect(d.title).toBeTruthy()
     expect(d.body).toBeTruthy()
   })

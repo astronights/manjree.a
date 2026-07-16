@@ -91,9 +91,6 @@ export default function Home() {
     listProducts()
       .then((list) => {
         setProducts(list)
-        if (!searchParams.get('hl') && !searchParams.get('hs')) {
-          setFilters((f) => ({ ...f, hideSeen: true }))
-        }
         // Ask the service worker to cache only cover photos (not gallery images).
         if ('serviceWorker' in navigator) {
           const covers = list
@@ -219,13 +216,6 @@ export default function Home() {
     setCategory(value)
   }
 
-  // When opening via a push notification tap the SW appends ?_notif=1.
-  // Enable hideSeen so the catalog shows only unseen pieces — notifications are for fresh things.
-  useEffect(() => {
-    if (searchParams.get('_notif') !== '1') return
-    setFilters((f) => ({ ...f, hideSeen: true }))
-    // The URL sync effect removes _notif automatically (it only writes known filter params).
-  }, [searchParams])
 
   // Record search terms once the customer pauses typing.
   useEffect(() => {

@@ -132,8 +132,8 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
         }
       `}</style>
 
-      <div className="relative overflow-x-auto">
-        <div style={{ minWidth: '420px', position: 'relative' }}>
+      <div className={n > 7 ? 'relative overflow-x-auto' : 'relative'}>
+        <div style={{ minWidth: n > 7 ? '420px' : undefined, position: 'relative' }}>
           <svg
             ref={svgRef}
             viewBox={`0 0 ${W} ${H}`}

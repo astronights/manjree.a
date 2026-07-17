@@ -7,7 +7,7 @@ import {
   summarizeByDay,
   summarizeFilters,
 } from '../../lib/analytics'
-import type { DayStat, FilterStat, Summary } from '../../lib/analytics'
+import type { DayStat } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import type { AnalyticsEvent, FilterKind, Product } from '../../types'
@@ -344,13 +344,13 @@ function ChartControls({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function AdminAnalytics() {
-  const [data, setData] = useState<Summary | null>(null)
-  const [filterStats, setFilterStats] = useState<Map<FilterKind, FilterStat[]>>(new Map())
   const [subscribers, setSubscribers] = useState<number | null>(null)
   const [rawEvents, setRawEvents] = useState<AnalyticsEvent[]>([])
   const [subDates, setSubDates] = useState<string[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [launchSince, setLaunchSince] = useState('2026-07-16T18:00:00')
 
   // Chart controls
   const [preset, setPreset] = useState<Preset>('3d')
@@ -363,10 +363,9 @@ export default function AdminAnalytics() {
       .then(([events, products]) => {
         setRawEvents(events)
         setAllProducts(products)
-        setData(summarize(events, products))
-        setFilterStats(summarizeFilters(events))
+        setLoading(false)
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => { setError(e.message); setLoading(false) })
 
     if (supabase) {
       supabase
@@ -384,6 +383,19 @@ export default function AdminAnalytics() {
     [allProducts],
   )
 
+  const sinceEvents = useMemo(
+    () => rawEvents.filter((e) => e.created_at >= launchSince),
+    [rawEvents, launchSince],
+  )
+
+  const sinceDates = useMemo(
+    () => subDates.filter((d) => d >= launchSince),
+    [subDates, launchSince],
+  )
+
+  const data = useMemo(() => summarize(sinceEvents, allProducts), [sinceEvents, allProducts])
+  const filterStats = useMemo(() => summarizeFilters(sinceEvents), [sinceEvents])
+
   const { startDate, endDate } = useMemo(() => {
     if (preset === 'custom') return { startDate: customStart, endDate: customEnd }
     const days = preset === '3d' ? 3 : preset === '7d' ? 7 : preset === '14d' ? 14 : 30
@@ -391,19 +403,19 @@ export default function AdminAnalytics() {
   }, [preset, customStart, customEnd])
 
   const filteredEvents = useMemo(() => {
-    if (categoryFilter === 'all') return rawEvents
+    if (categoryFilter === 'all') return sinceEvents
     const ids = new Set(allProducts.filter((p) => p.category === categoryFilter).map((p) => p.id))
-    return rawEvents.filter((e) => e.product_id !== null && ids.has(e.product_id))
-  }, [rawEvents, allProducts, categoryFilter])
+    return sinceEvents.filter((e) => e.product_id !== null && ids.has(e.product_id))
+  }, [sinceEvents, allProducts, categoryFilter])
 
   const dailyStats = useMemo(
-    () => (startDate <= endDate ? summarizeByDay(filteredEvents, subDates, startDate, endDate) : []),
-    [filteredEvents, subDates, startDate, endDate],
+    () => (startDate <= endDate ? summarizeByDay(filteredEvents, sinceDates, startDate, endDate) : []),
+    [filteredEvents, sinceDates, startDate, endDate],
   )
 
   // Running total of all subscribers as of each chart day (not just new in range).
   const chartStats = useMemo(() => {
-    const sorted = [...subDates].filter((d) => typeof d === 'string').sort()
+    const sorted = [...sinceDates].filter((d) => typeof d === 'string').sort()
     return dailyStats.map((d) => {
       let total = 0
       for (const dt of sorted) {
@@ -412,7 +424,7 @@ export default function AdminAnalytics() {
       }
       return { ...d, subscribers: total }
     })
-  }, [dailyStats, subDates])
+  }, [dailyStats, sinceDates])
 
   const piecesByDay = useMemo(() => {
     const productList =
@@ -429,18 +441,18 @@ export default function AdminAnalytics() {
   // Devices that have activity on more than one calendar day.
   const returningVisitors = useMemo(() => {
     const deviceDays = new Map<string, Set<string>>()
-    for (const e of rawEvents) {
+    for (const e of sinceEvents) {
       const day = e.created_at.slice(0, 10)
       if (!deviceDays.has(e.device_id)) deviceDays.set(e.device_id, new Set())
       deviceDays.get(e.device_id)!.add(day)
     }
     return [...deviceDays.values()].filter((days) => days.size > 1).length
-  }, [rawEvents])
+  }, [sinceEvents])
 
   if (error) {
     return <p className="p-8 text-center text-base text-bougainvillea-500">Could not load analytics: {error}</p>
   }
-  if (!data) {
+  if (loading) {
     return <p className="p-8 text-center text-base text-night-700/80 dark:text-cream-300/60">Loading…</p>
   }
 
@@ -461,6 +473,16 @@ export default function AdminAnalytics() {
         ← Catalog
       </Link>
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">Analytics</h1>
+
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-sm text-night-700/70 dark:text-cream-300/50">Since launch</span>
+        <input
+          type="datetime-local"
+          value={launchSince}
+          onChange={(e) => setLaunchSince(e.target.value)}
+          className="rounded-lg border border-cream-300 bg-cream-50 px-2.5 py-1 text-xs text-night-800 focus:outline-none focus:ring-2 focus:ring-marigold-400 dark:border-night-700 dark:bg-night-800 dark:text-cream-100"
+        />
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatTile label="Piece views" value={totals.views} />

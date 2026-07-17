@@ -132,8 +132,8 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
         }
       `}</style>
 
-      <div className={n > 7 ? 'relative overflow-x-auto' : 'relative'}>
-        <div style={{ minWidth: n > 7 ? '420px' : undefined, position: 'relative' }}>
+      <div className={n > 3 ? 'relative overflow-x-auto' : 'relative'}>
+        <div style={{ minWidth: n > 3 ? '420px' : undefined, position: 'relative' }}>
           <svg
             ref={svgRef}
             viewBox={`0 0 ${W} ${H}`}
@@ -265,7 +265,7 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
 
 // ── Chart controls ────────────────────────────────────────────────────────────
 
-type Preset = '7d' | '14d' | '30d' | 'custom'
+type Preset = '3d' | '7d' | '14d' | '30d' | 'custom'
 
 interface ChartControlsProps {
   preset: Preset
@@ -292,9 +292,9 @@ function ChartControls({
     <div className="mb-3 flex flex-wrap items-center gap-3">
       {/* Period presets */}
       <div className="flex items-center gap-0.5 rounded-full bg-cream-100 p-0.5 dark:bg-night-700">
-        {(['7d', '14d', '30d'] as Preset[]).map((p) => (
+        {(['3d', '7d', '14d', '30d'] as Preset[]).map((p) => (
           <button key={p} onClick={() => setPreset(p)} className={preset === p ? active : inactive}>
-            {p === '7d' ? '7 days' : p === '14d' ? '14 days' : '30 days'}
+            {p === '3d' ? '3 days' : p === '7d' ? '7 days' : p === '14d' ? '14 days' : '30 days'}
           </button>
         ))}
         <button onClick={() => setPreset('custom')} className={preset === 'custom' ? active : inactive}>
@@ -353,8 +353,8 @@ export default function AdminAnalytics() {
   const [error, setError] = useState<string | null>(null)
 
   // Chart controls
-  const [preset, setPreset] = useState<Preset>('7d')
-  const [customStart, setCustomStart] = useState(nDaysAgoStr(7))
+  const [preset, setPreset] = useState<Preset>('3d')
+  const [customStart, setCustomStart] = useState(nDaysAgoStr(3))
   const [customEnd, setCustomEnd] = useState(todayStr())
   const [categoryFilter, setCategoryFilter] = useState('all')
 
@@ -386,7 +386,7 @@ export default function AdminAnalytics() {
 
   const { startDate, endDate } = useMemo(() => {
     if (preset === 'custom') return { startDate: customStart, endDate: customEnd }
-    const days = preset === '7d' ? 7 : preset === '14d' ? 14 : 30
+    const days = preset === '3d' ? 3 : preset === '7d' ? 7 : preset === '14d' ? 14 : 30
     return { startDate: nDaysAgoStr(days), endDate: todayStr() }
   }, [preset, customStart, customEnd])
 

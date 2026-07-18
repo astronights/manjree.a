@@ -37,7 +37,9 @@ export default function ProductDetail() {
     if (product && !product.is_draft) {
       recordViewOnce(product.id)
       notePieceViewed(product.id)
+      document.title = `${product.title} — Manjree's`
     }
+    return () => { document.title = "Manjree's — Ethnic Wear" }
   }, [product])
 
   if (product === undefined) {

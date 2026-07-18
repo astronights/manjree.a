@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://manjree.online/sitemap.xml

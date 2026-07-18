@@ -17,14 +17,14 @@ export default async function handler(req: any, res: any) {
   try {
     if (supabaseUrl && anonKey) {
       const apiRes = await fetch(
-        `${supabaseUrl}/rest/v1/products?is_draft=eq.false&select=id,updated_at`,
+        `${supabaseUrl}/rest/v1/products?is_draft=eq.false&select=id,created_at`,
         { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } },
       )
       const rows = await apiRes.json()
       for (const row of rows ?? []) {
         urls.push({
           loc: `${origin}/product/${encodeURIComponent(row.id)}`,
-          lastmod: row.updated_at ? String(row.updated_at).slice(0, 10) : undefined,
+          lastmod: row.created_at ? String(row.created_at).slice(0, 10) : undefined,
         })
       }
     }

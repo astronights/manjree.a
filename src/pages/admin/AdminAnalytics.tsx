@@ -489,7 +489,7 @@ export default function AdminAnalytics() {
         <StatTile label="WhatsApp enquiries" value={totals.enquiries} />
         <StatTile label="Unique devices" value={totals.devices} />
         <StatTile label="Returning visitors" value={returningVisitors} />
-        <StatTile label="Notification opt-ins" value={subscribers ?? 0} />
+        <StatTile label="Notification opt-ins" value={sinceDates.length} />
       </div>
 
       <section className="mt-7">

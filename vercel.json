@@ -11,7 +11,6 @@
         }
       ]
     },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+{ "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

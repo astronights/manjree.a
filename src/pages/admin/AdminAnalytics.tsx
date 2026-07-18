@@ -344,7 +344,7 @@ function ChartControls({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function AdminAnalytics() {
-  const [subscribers, setSubscribers] = useState<number | null>(null)
+  const [, setSubscribers] = useState<number | null>(null)
   const [rawEvents, setRawEvents] = useState<AnalyticsEvent[]>([])
   const [subDates, setSubDates] = useState<string[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])

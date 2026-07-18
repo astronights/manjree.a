@@ -38,8 +38,39 @@ export default function ProductDetail() {
       recordViewOnce(product.id)
       notePieceViewed(product.id)
       document.title = `${product.title} — Manjree's`
+
+      const stockMap: Record<string, string> = {
+        in_stock: 'https://schema.org/InStock',
+        sold_out: 'https://schema.org/OutOfStock',
+        on_order: 'https://schema.org/PreOrder',
+      }
+      const ld: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.title,
+        image: product.images.filter((u) => /^https?:\/\//.test(u)),
+        ...(product.description ? { description: product.description.slice(0, 500) } : {}),
+        category: product.category,
+        size: product.sizes,
+        offers: {
+          '@type': 'Offer',
+          url: `https://manjree.online/product/${product.id}`,
+          availability: stockMap[product.stock_status] ?? 'https://schema.org/InStock',
+          ...(product.show_price
+            ? { priceCurrency: 'INR', price: String(product.sale_price ?? product.price) }
+            : {}),
+        },
+      }
+      const script = document.createElement('script')
+      script.type = 'application/ld+json'
+      script.id = 'product-jsonld'
+      script.textContent = JSON.stringify(ld)
+      document.head.appendChild(script)
     }
-    return () => { document.title = "Manjree's — Ethnic Wear" }
+    return () => {
+      document.title = "Manjree's — Ethnic Wear"
+      document.getElementById('product-jsonld')?.remove()
+    }
   }, [product])
 
   if (product === undefined) {

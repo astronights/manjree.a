@@ -22,12 +22,13 @@ export default async function handler(req: any, res: any) {
   let title = "Manjree's — Ethnic Wear"
   let description = 'Embrace elegance in ethnic wear. Browse kurtis, suit sets and more.'
   let image = `${origin}/icon-512.png`
+  let jsonLd = ''
   const productUrl = `${origin}/product/${id}`
 
   try {
     if (supabaseUrl && anonKey && id) {
       const apiRes = await fetch(
-        `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(id)}&is_draft=eq.false&select=title,description,images&limit=1`,
+        `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(id)}&is_draft=eq.false&select=title,description,images,price,sale_price,stock_status,show_price,sizes,category&limit=1`,
         { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } },
       )
       const rows = await apiRes.json()
@@ -38,6 +39,30 @@ export default async function handler(req: any, res: any) {
         // First http(s) image — skip data: URIs from demo mode
         const cover = (product.images as string[]).find((u: string) => /^https?:\/\//.test(u))
         if (cover) image = cover
+
+        const stockMap: Record<string, string> = {
+          in_stock: 'https://schema.org/InStock',
+          sold_out: 'https://schema.org/OutOfStock',
+          on_order: 'https://schema.org/PreOrder',
+        }
+        const ld: Record<string, unknown> = {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.title,
+          image: (product.images as string[]).filter((u: string) => /^https?:\/\//.test(u)),
+          ...(product.description ? { description: String(product.description).slice(0, 500) } : {}),
+          category: product.category,
+          size: product.sizes,
+          offers: {
+            '@type': 'Offer',
+            url: productUrl,
+            availability: stockMap[product.stock_status] ?? 'https://schema.org/InStock',
+            ...(product.show_price
+              ? { priceCurrency: 'INR', price: String(product.sale_price ?? product.price) }
+              : {}),
+          },
+        }
+        jsonLd = JSON.stringify(ld)
       }
     }
   } catch {
@@ -56,6 +81,7 @@ export default async function handler(req: any, res: any) {
 <meta property="og:image" content="${escapeHtml(image)}">
 <meta property="og:site_name" content="Manjree's">
 <meta name="twitter:card" content="summary_large_image">
+${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body></body>
 </html>`

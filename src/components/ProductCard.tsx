@@ -46,7 +46,7 @@ export default function ProductCard({ product }: { product: Product }) {
         ) : (
           <img
             src={cover}
-            alt={product.title}
+            alt={`${product.title} — ${product.category}`}
             loading="lazy"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />

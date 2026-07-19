@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "Manjree's — Ethnic Wear",
         short_name: "Manjree's",
-        description: 'Embrace elegance in ethnic wear. Kurtis, suit sets and more.',
+        description: "Shop women's ethnic wear online — kurtis, sarees, co-ords, kaftans, suit sets & more. All sizes. Affordable premium, ships worldwide from Chennai.",
         theme_color: '#E8B923',
         background_color: '#FAF6EE',
         display: 'standalone',

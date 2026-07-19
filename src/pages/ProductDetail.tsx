@@ -136,6 +136,8 @@ export default function ProductDetail() {
                 <img
                   src={src}
                   alt={`${product.title} — photo ${i + 1}`}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={i === 0 ? 'high' : 'auto'}
                   className="h-full w-full object-cover"
                 />
               </button>

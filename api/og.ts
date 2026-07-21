@@ -51,6 +51,7 @@ export default async function handler(req: any, res: any) {
           name: product.title,
           image: (product.images as string[]).filter((u: string) => /^https?:\/\//.test(u)),
           ...(product.description ? { description: String(product.description).slice(0, 500) } : {}),
+          brand: { '@type': 'Brand', name: "Manjree's" },
           category: product.category,
           size: product.sizes,
           offers: {
@@ -60,6 +61,11 @@ export default async function handler(req: any, res: any) {
             ...(product.show_price
               ? { priceCurrency: 'INR', price: String(product.sale_price ?? product.price) }
               : {}),
+            shippingDetails: {
+              '@type': 'OfferShippingDetails',
+              shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+              shippingRate: { '@type': 'MonetaryAmount', currency: 'INR' },
+            },
           },
         }
         jsonLd = JSON.stringify(ld)

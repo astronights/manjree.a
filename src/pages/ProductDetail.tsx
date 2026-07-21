@@ -50,6 +50,7 @@ export default function ProductDetail() {
         name: product.title,
         image: product.images.filter((u) => /^https?:\/\//.test(u)),
         ...(product.description ? { description: product.description.slice(0, 500) } : {}),
+        brand: { '@type': 'Brand', name: "Manjree's" },
         category: product.category,
         size: product.sizes,
         offers: {
@@ -59,6 +60,11 @@ export default function ProductDetail() {
           ...(product.show_price
             ? { priceCurrency: 'INR', price: String(product.sale_price ?? product.price) }
             : {}),
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+            shippingRate: { '@type': 'MonetaryAmount', currency: 'INR' },
+          },
         },
       }
       const script = document.createElement('script')

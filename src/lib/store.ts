@@ -137,18 +137,61 @@ export async function deleteProduct(id: string): Promise<void> {
 
 const MAX_VIDEO_MB = 50
 
+// Converts any image (including HEIC from iOS) to JPEG via canvas.
+// Also caps dimensions to 1920px to keep file sizes manageable.
+// Falls back to the original file if the browser can't decode it.
+async function normalizeToJpeg(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      try {
+        const MAX = 1920
+        const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.naturalWidth * scale)
+        canvas.height = Math.round(img.naturalHeight * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { resolve(file); return }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(
+          (blob) => resolve(blob
+            ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+            : file),
+          'image/jpeg',
+          0.9,
+        )
+      } catch {
+        resolve(file)
+      }
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(file)
+    }
+    img.src = url
+  })
+}
+
 export async function uploadMedia(files: Iterable<File>): Promise<string[]> {
   if (supabase) {
     const urls: string[] = []
-    for (const file of files) {
+    for (let file of files) {
       if (file.type.startsWith('video/') && file.size > MAX_VIDEO_MB * 1024 * 1024) {
         throw new Error(`"${file.name}" is over ${MAX_VIDEO_MB} MB — trim or compress the video first.`)
+      }
+      if (!file.type.startsWith('video/')) {
+        file = await normalizeToJpeg(file)
+      }
+      if (file.size === 0) {
+        throw new Error(`"${file.name}" appears empty — if it's stored in iCloud, open Photos and let it finish downloading first.`)
       }
       const ext = file.name.split('.').pop() || 'jpg'
       const path = `${crypto.randomUUID()}.${ext}`
       const { error } = await supabase.storage
         .from('product-images')
-        .upload(path, file, { contentType: file.type || undefined })
+        .upload(path, file, { contentType: file.type || 'image/jpeg' })
       if (error) throw error
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)
       urls.push(data.publicUrl)

@@ -6,8 +6,7 @@ function escapeXml(s: string) {
 }
 
 export default async function handler(req: any, res: any) {
-  const host = (req.headers.host as string) || 'manjree.online'
-  const origin = `https://${host}`
+  const origin = 'https://manjree.online'
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY

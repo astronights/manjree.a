@@ -64,7 +64,6 @@ export default async function handler(req: any, res: any) {
             shippingDetails: {
               '@type': 'OfferShippingDetails',
               shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
-              shippingRate: { '@type': 'MonetaryAmount', currency: 'INR' },
             },
           },
         }

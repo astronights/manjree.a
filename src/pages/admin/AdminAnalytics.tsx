@@ -27,7 +27,7 @@ function todayStr() {
 
 function nDaysAgoStr(n: number) {
   const d = new Date()
-  d.setDate(d.getDate() - (n - 1))
+  d.setUTCDate(d.getUTCDate() - (n - 1))
   return d.toISOString().slice(0, 10)
 }
 

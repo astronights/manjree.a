@@ -252,6 +252,10 @@ export default function SettingsSheet({ open, onClose, onGetApp }: Props) {
               </button>
             </>
           )}
+
+          <p className="pt-2 text-center text-[11px] text-night-700/30 dark:text-cream-300/25">
+            v{__APP_VERSION__} · {__BUILD_DATE__}
+          </p>
         </div>
       </div>
     </>

@@ -203,12 +203,12 @@ export function summarizeByDay(
   endDate: string,
 ): DayStat[] {
   const byDate = new Map<string, DayStat>()
-  const cur = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
+  const cur = new Date(startDate + 'T00:00:00Z')
+  const end = new Date(endDate + 'T00:00:00Z')
   while (cur <= end) {
     const date = cur.toISOString().slice(0, 10)
     byDate.set(date, { date, views: 0, enquiries: 0, subscribers: 0 })
-    cur.setDate(cur.getDate() + 1)
+    cur.setUTCDate(cur.getUTCDate() + 1)
   }
   for (const e of events) {
     const day = byDate.get(e.created_at.slice(0, 10))

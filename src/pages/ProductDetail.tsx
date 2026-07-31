@@ -63,7 +63,6 @@ export default function ProductDetail() {
           shippingDetails: {
             '@type': 'OfferShippingDetails',
             shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
-            shippingRate: { '@type': 'MonetaryAmount', currency: 'INR' },
           },
         },
       }

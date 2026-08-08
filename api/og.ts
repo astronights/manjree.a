@@ -49,6 +49,7 @@ export default async function handler(req: any, res: any) {
           '@context': 'https://schema.org',
           '@type': 'Product',
           name: product.title,
+          sku: id,
           image: (product.images as string[]).filter((u: string) => /^https?:\/\//.test(u)),
           ...(product.description ? { description: String(product.description).slice(0, 500) } : {}),
           brand: { '@type': 'Brand', name: "Manjree's" },

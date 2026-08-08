@@ -48,6 +48,7 @@ export default function ProductDetail() {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.title,
+        sku: product.id,
         image: product.images.filter((u) => /^https?:\/\//.test(u)),
         ...(product.description ? { description: product.description.slice(0, 500) } : {}),
         brand: { '@type': 'Brand', name: "Manjree's" },

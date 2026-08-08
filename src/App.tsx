@@ -25,6 +25,7 @@ import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminOrdering from './pages/admin/AdminOrdering'
 import AdminNotify from './pages/admin/AdminNotify'
 import AdminSettings from './pages/admin/AdminSettings'
+import Policies from './pages/Policies'
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/install" element={<Home />} />
         <Route path="/chat" element={<ChatRedirect />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/policies" element={<Policies />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route element={<AdminGuard />}>
           <Route path="/admin" element={<AdminDashboard />} />

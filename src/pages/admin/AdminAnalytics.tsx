@@ -7,7 +7,7 @@ import {
   summarizeByDay,
   summarizeFilters,
 } from '../../lib/analytics'
-import type { DayStat } from '../../lib/analytics'
+import type { DayStat, ProductStats } from '../../lib/analytics'
 import { listProducts } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import type { AnalyticsEvent, FilterKind, Product } from '../../types'
@@ -37,6 +37,51 @@ function StatTile({ label, value }: { label: string; value: number }) {
       <p className="font-display text-3xl font-semibold text-night-800 dark:text-cream-100">{value}</p>
       <p className="mt-1 text-sm text-night-700/85 dark:text-cream-300/70">{label}</p>
     </div>
+  )
+}
+
+// ── Most viewed pieces ────────────────────────────────────────────────────────
+
+// One row of the "Most viewed pieces" list. `maxViews` is always the maximum
+// across the *whole* list so bar widths stay comparable between the inline
+// top-3 and the full list in the overlay.
+function PieceRow({ row, maxViews }: { row: ProductStats; maxViews: number }) {
+  return (
+    <li className="rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700">
+      <div className="flex items-center gap-3">
+        {row.product ? (
+          <img src={row.product.images[0]} alt="" className="h-12 w-10 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <span className="h-12 w-10 shrink-0 rounded-lg bg-cream-200 dark:bg-night-700" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-medium text-night-800 dark:text-cream-100">
+            {row.product ? (
+              <Link to={`/product/${row.product.id}`} className="hover:underline">
+                {row.product.title}
+              </Link>
+            ) : (
+              '(deleted piece)'
+            )}
+          </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-night-700">
+              <div
+                className="h-full rounded-full bg-marigold-600"
+                style={{ width: `${(row.views / maxViews) * 100}%` }}
+              />
+            </div>
+            <span className="w-14 shrink-0 text-right text-sm tabular-nums text-night-700 dark:text-cream-200">
+              {row.views} view{row.views === 1 ? '' : 's'}
+            </span>
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-cream-200 px-2.5 py-1 text-sm tabular-nums text-night-700 dark:bg-night-700 dark:text-cream-200">
+          {row.enquiries} ✆
+          {row.views > 0 && ` · ${Math.round((row.enquiries / row.views) * 100)}%`}
+        </span>
+      </div>
+    </li>
   )
 }
 
@@ -358,6 +403,16 @@ export default function AdminAnalytics() {
   const [customEnd, setCustomEnd] = useState(todayStr())
   const [categoryFilter, setCategoryFilter] = useState('all')
 
+  // "Most viewed pieces" shows the top 3 inline; the rest live in this overlay.
+  const [allPiecesOpen, setAllPiecesOpen] = useState(false)
+
+  useEffect(() => {
+    if (!allPiecesOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setAllPiecesOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [allPiecesOpen])
+
   useEffect(() => {
     Promise.all([fetchEvents(), listProducts({ includeDrafts: true })])
       .then(([events, products]) => {
@@ -559,47 +614,18 @@ export default function AdminAnalytics() {
                 Views count once per device per visit; enquiries are WhatsApp taps.
               </p>
               <ul className="mt-3 space-y-2">
-                {byProduct.map((row, i) => (
-                  <li
-                    key={row.product?.id ?? `deleted-${i}`}
-                    className="rounded-2xl bg-cream-50 p-3 ring-1 ring-cream-300/50 dark:bg-night-800 dark:ring-night-700"
-                  >
-                    <div className="flex items-center gap-3">
-                      {row.product ? (
-                        <img src={row.product.images[0]} alt="" className="h-12 w-10 shrink-0 rounded-lg object-cover" />
-                      ) : (
-                        <span className="h-12 w-10 shrink-0 rounded-lg bg-cream-200 dark:bg-night-700" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-medium text-night-800 dark:text-cream-100">
-                          {row.product ? (
-                            <Link to={`/product/${row.product.id}`} className="hover:underline">
-                              {row.product.title}
-                            </Link>
-                          ) : (
-                            '(deleted piece)'
-                          )}
-                        </p>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-night-700">
-                            <div
-                              className="h-full rounded-full bg-marigold-600"
-                              style={{ width: `${(row.views / maxViews) * 100}%` }}
-                            />
-                          </div>
-                          <span className="w-14 shrink-0 text-right text-sm tabular-nums text-night-700 dark:text-cream-200">
-                            {row.views} view{row.views === 1 ? '' : 's'}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-cream-200 px-2.5 py-1 text-sm tabular-nums text-night-700 dark:bg-night-700 dark:text-cream-200">
-                        {row.enquiries} ✆
-                        {row.views > 0 && ` · ${Math.round((row.enquiries / row.views) * 100)}%`}
-                      </span>
-                    </div>
-                  </li>
+                {byProduct.slice(0, 3).map((row, i) => (
+                  <PieceRow key={row.product?.id ?? `deleted-${i}`} row={row} maxViews={maxViews} />
                 ))}
               </ul>
+              {byProduct.length > 3 && (
+                <button
+                  onClick={() => setAllPiecesOpen(true)}
+                  className="mt-2 w-full rounded-2xl bg-cream-50 py-2.5 text-sm font-medium text-night-700 ring-1 ring-cream-300/50 transition-colors hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marigold-400 dark:bg-night-800 dark:text-cream-200 dark:ring-night-700 dark:hover:bg-night-700"
+                >
+                  See all {byProduct.length} pieces
+                </button>
+              )}
             </section>
           )}
 
@@ -637,6 +663,41 @@ export default function AdminAnalytics() {
           )}
 
         </>
+      )}
+
+      {allPiecesOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-night-900/50 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="All pieces by views"
+          onClick={() => setAllPiecesOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-t-2xl bg-cream-100 shadow-2xl dark:bg-night-900 sm:rounded-2xl"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-cream-300/60 px-4 py-3 dark:border-night-700">
+              <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
+                All pieces by views
+              </h2>
+              <button
+                onClick={() => setAllPiecesOpen(false)}
+                aria-label="Close"
+                className="shrink-0 rounded-full p-1.5 text-night-700 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-marigold-400 dark:text-cream-200 dark:hover:bg-night-800"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4 pb-safe-bottom">
+              {byProduct.map((row, i) => (
+                <PieceRow key={row.product?.id ?? `deleted-${i}`} row={row} maxViews={maxViews} />
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
     </main>
   )

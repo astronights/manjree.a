@@ -23,6 +23,12 @@ export default async function handler(req: any, res: any) {
   let description = 'Embrace elegance in ethnic wear. Browse kurtis, suit sets and more.'
   let image = `${origin}/icon-512.png`
   let jsonLd = ''
+  // Crawlers index on body content, so this response mirrors what a visitor
+  // sees in the React page. An empty body reads as a thin page and risks
+  // "Crawled - currently not indexed".
+  let body = `<h1>Manjree's — Ethnic Wear</h1>
+<p>${escapeHtml(description)}</p>
+<p><a href="/">Browse the catalog</a></p>`
   const productUrl = `${origin}/product/${id}`
 
   try {
@@ -69,6 +75,36 @@ export default async function handler(req: any, res: any) {
           },
         }
         jsonLd = JSON.stringify(ld)
+
+        const stockLabels: Record<string, string> = {
+          in_stock: 'In stock',
+          sold_out: 'Sold out',
+          on_order: 'Made to order',
+        }
+        const sizes = (product.sizes as string[] | null) ?? []
+        const photos = (product.images as string[]).filter((u: string) => /^https?:\/\//.test(u))
+        const priceLine = product.show_price
+          ? `₹${product.sale_price ?? product.price}`
+          : 'Price on request — ask on WhatsApp'
+
+        body = `<article>
+<h1>${escapeHtml(product.title)}</h1>
+${product.category ? `<p>Category: ${escapeHtml(String(product.category))}</p>` : ''}
+<p>${escapeHtml(priceLine)}</p>
+<p>${escapeHtml(stockLabels[product.stock_status] ?? 'In stock')}</p>
+${sizes.length ? `<p>Available sizes: ${escapeHtml(sizes.join(', '))}</p>` : ''}
+${product.description ? `<p style="white-space:pre-line">${escapeHtml(String(product.description))}</p>` : ''}
+${photos
+  .map(
+    (u: string, i: number) =>
+      `<img src="${escapeHtml(u)}" alt="${escapeHtml(product.title)} — photo ${i + 1}" width="400">`,
+  )
+  .join('\n')}
+</article>
+<nav>
+<a href="/">All pieces</a> ·
+<a href="/policies">Shipping &amp; returns</a>
+</nav>`
       }
     }
   } catch {
@@ -87,9 +123,10 @@ export default async function handler(req: any, res: any) {
 <meta property="og:image" content="${escapeHtml(image)}">
 <meta property="og:site_name" content="Manjree's">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="${escapeHtml(productUrl)}">
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
-<body></body>
+<body>${body}</body>
 </html>`
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8')

@@ -98,11 +98,70 @@ interface DailyChartProps {
   piecesPerDay: number[]
 }
 
+// Monotone cubic (Fritsch–Carlson): smooth curves that never overshoot the
+// data. A plain Catmull-Rom spline would dip below zero between low points,
+// which reads as negative views.
+function smoothPath(values: number[], xFn: (i: number) => number, yFn: (v: number) => number) {
+  const n = values.length
+  if (n === 0) return ''
+  const pts = values.map((v, i) => ({ x: xFn(i), y: yFn(v) }))
+  const move = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
+  if (n === 1) return move
+  if (n === 2) return `${move} L ${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`
+
+  const dx: number[] = []
+  const slope: number[] = []
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = pts[i + 1].x - pts[i].x
+    slope[i] = (pts[i + 1].y - pts[i].y) / dx[i]
+  }
+
+  // Tangent at each point, flattened to 0 at local extrema so the curve
+  // turns without bulging past the neighbouring values.
+  const t: number[] = new Array(n)
+  t[0] = slope[0]
+  t[n - 1] = slope[n - 2]
+  for (let i = 1; i < n - 1; i++) {
+    if (slope[i - 1] * slope[i] <= 0) {
+      t[i] = 0
+    } else {
+      const w1 = 2 * dx[i] + dx[i - 1]
+      const w2 = dx[i] + 2 * dx[i - 1]
+      t[i] = (w1 + w2) / (w1 / slope[i - 1] + w2 / slope[i])
+    }
+  }
+
+  let d = move
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3
+    const c1x = pts[i].x + h
+    const c1y = pts[i].y + t[i] * h
+    const c2x = pts[i + 1].x - h
+    const c2y = pts[i + 1].y - t[i + 1] * h
+    d += ` C ${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`
+  }
+  return d
+}
+
 function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; idx: number } | null>(null)
 
-  const PAD = { top: 20, right: 16, bottom: 44, left: 40 }
+  // Rendered width drives how many date labels fit. Axis labels are HTML, not
+  // SVG <text>, so they stay at a real 12px instead of shrinking with the
+  // viewBox on narrow screens.
+  const [wrapW, setWrapW] = useState(0)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    setWrapW(el.getBoundingClientRect().width)
+    const ro = new ResizeObserver(([entry]) => setWrapW(entry.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const PAD = { top: 20, right: 16, bottom: 44, left: 56 }
   const W = 700
   const H = 240
   const plotW = W - PAD.left - PAD.right
@@ -122,18 +181,21 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
   function yOfPieces(v: number) {
     return PAD.top + plotH - (v / maxPieces) * plotH
   }
-  function polyline(values: number[], yFn: (v: number) => number) {
-    return values.map((v, i) => `${xOf(i).toFixed(1)},${yFn(v).toFixed(1)}`).join(' ')
-  }
-
-  // Up to 7 evenly-spaced x-axis tick indices, guarded against n≤1.
-  const maxTicks = Math.min(n, 7)
+  // Evenly-spaced x-axis tick indices. The chart always fits its container, so
+  // the tick count adapts to the measured width — a "12 Sep" label needs about
+  // 58px to sit clear of its neighbours.
+  const fitTicks = wrapW > 0 ? Math.max(2, Math.floor(wrapW / 58)) : 7
+  const maxTicks = Math.min(n, fitTicks, 7)
   const uniqueTicks =
     maxTicks <= 1
       ? n > 0 ? [0] : []
-      : Array.from({ length: maxTicks }, (_, k) =>
-          Math.round((k / (maxTicks - 1)) * (n - 1)),
-        )
+      : [
+          ...new Set(
+            Array.from({ length: maxTicks }, (_, k) =>
+              Math.round((k / (maxTicks - 1)) * (n - 1)),
+            ),
+          ),
+        ]
 
   // Y-axis: 5 gridlines at 0%, 25%, 50%, 75%, 100%
   const yGridLines = [0, 0.25, 0.5, 0.75, 1]
@@ -177,8 +239,8 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
         }
       `}</style>
 
-      <div className={n > 3 ? 'relative overflow-x-auto' : 'relative'}>
-        <div style={{ minWidth: n > 3 ? '420px' : undefined, position: 'relative' }}>
+      <div className="relative">
+        <div ref={wrapRef} style={{ position: 'relative' }}>
           <svg
             ref={svgRef}
             viewBox={`0 0 ${W} ${H}`}
@@ -189,20 +251,12 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
             aria-label="Daily activity line chart"
             role="img"
           >
-            {/* Gridlines + Y labels */}
+            {/* Gridlines */}
             {yGridLines.map((t) => {
               const y = PAD.top + t * plotH
-              const v = Math.round(maxEvent * (1 - t))
               return (
-                <g key={t}>
-                  <line x1={PAD.left} y1={y} x2={PAD.left + plotW} y2={y}
-                    stroke="var(--c-grid)" strokeWidth="1" />
-                  <text x={PAD.left - 8} y={y + 4.5} textAnchor="end"
-                    fontSize="12" fontWeight="500" fill="var(--c-tick)"
-                    style={{ fontFamily: 'system-ui,-apple-system,"Segoe UI",sans-serif' }}>
-                    {v}
-                  </text>
-                </g>
+                <line key={t} x1={PAD.left} y1={y} x2={PAD.left + plotW} y2={y}
+                  stroke="var(--c-grid)" strokeWidth="1" />
               )
             })}
 
@@ -210,29 +264,22 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
             <line x1={PAD.left} y1={PAD.top + plotH} x2={PAD.left + plotW} y2={PAD.top + plotH}
               stroke="var(--c-axis)" strokeWidth="1" />
 
-            {/* X tick marks + labels */}
+            {/* X tick marks */}
             {uniqueTicks.map((i) => (
-              <g key={i}>
-                <line x1={xOf(i)} y1={PAD.top + plotH} x2={xOf(i)} y2={PAD.top + plotH + 4}
-                  stroke="var(--c-axis)" strokeWidth="1" />
-                <text x={xOf(i)} y={PAD.top + plotH + 18} textAnchor="middle"
-                  fontSize="12" fontWeight="500" fill="var(--c-tick)"
-                  style={{ fontFamily: 'system-ui,-apple-system,"Segoe UI",sans-serif' }}>
-                  {fmtDate(stats[i].date)}
-                </text>
-              </g>
+              <line key={i} x1={xOf(i)} y1={PAD.top + plotH} x2={xOf(i)} y2={PAD.top + plotH + 4}
+                stroke="var(--c-axis)" strokeWidth="1" />
             ))}
 
             {/* Pieces reference line (dashed muted) */}
             {piecesPerDay.length === n && (
-              <polyline points={polyline(piecesPerDay, yOfPieces)}
+              <path d={smoothPath(piecesPerDay, xOf, yOfPieces)}
                 fill="none" stroke="var(--c-pieces)" strokeWidth="1.5" strokeDasharray="4 3" />
             )}
 
             {/* Event series lines */}
             {CHART_SERIES.map(({ key, cssVar }) => (
-              <polyline key={key}
-                points={polyline(stats.map((d) => d[key]), yOfEvent)}
+              <path key={key}
+                d={smoothPath(stats.map((d) => d[key]), xOf, yOfEvent)}
                 fill="none" stroke={`var(--c-${cssVar})`}
                 strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
             ))}
@@ -254,6 +301,37 @@ function DailyChart({ stats, piecesPerDay }: DailyChartProps) {
               </>
             )}
           </svg>
+
+          {/* Axis labels — HTML so they render at a true 12px on every screen
+              instead of scaling down with the viewBox. */}
+          {yGridLines.map((t) => (
+            <span
+              key={t}
+              style={{
+                position: 'absolute',
+                top: `${((PAD.top + t * plotH) / H) * 100}%`,
+                left: `${((PAD.left - 8) / W) * 100}%`,
+                transform: 'translate(-100%, -50%)',
+              }}
+              className="pointer-events-none text-[11px] font-medium tabular-nums text-night-800 dark:text-cream-100"
+            >
+              {Math.round(maxEvent * (1 - t))}
+            </span>
+          ))}
+          {uniqueTicks.map((i) => (
+            <span
+              key={i}
+              style={{
+                position: 'absolute',
+                top: `${((PAD.top + plotH + 7) / H) * 100}%`,
+                left: `${(xOf(i) / W) * 100}%`,
+                transform: 'translateX(-50%)',
+              }}
+              className="pointer-events-none whitespace-nowrap text-xs font-medium text-night-800 dark:text-cream-100"
+            >
+              {fmtDate(stats[i].date)}
+            </span>
+          ))}
 
           {/* Floating tooltip */}
           {tip !== null && tipData !== null && (

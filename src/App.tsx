@@ -11,6 +11,29 @@ function ScrollToTop() {
   return null
 }
 
+const SITE_ORIGIN = 'https://manjree.online'
+
+// Keeps <link rel="canonical"> in step with the current route. index.html can't
+// carry a static one: every route is served that same file, so a hardcoded
+// canonical declares the homepage as the original for every page — telling
+// crawlers to drop product pages as duplicates. Absent is safe (a page is its
+// own canonical by default); wrong is not.
+function Canonical() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    // /install renders Home, so point it at / rather than competing with it.
+    const path = pathname === '/install' ? '/' : pathname.replace(/\/+$/, '')
+    let link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'canonical'
+      document.head.appendChild(link)
+    }
+    link.href = `${SITE_ORIGIN}${path || '/'}`
+  }, [pathname])
+  return null
+}
+
 function ChatRedirect() {
   useEffect(() => { window.location.href = `https://wa.me/${shop.whatsappNumber}` }, [])
   return <p className="p-8 text-center text-sm text-night-700/80 dark:text-cream-300/60">Opening WhatsApp…</p>
@@ -31,6 +54,7 @@ export default function App() {
   return (
     <div className="min-h-dvh bg-cream-100 text-night-800 dark:bg-night-900 dark:text-cream-100">
       <ScrollToTop />
+      <Canonical />
       <Header />
       {!isSupabaseMode && (
         // Backend not configured (VITE_SUPABASE_* missing at build time). Loud

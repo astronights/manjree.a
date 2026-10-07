@@ -8,7 +8,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(Googlebot|bingbot|WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Applebot).*"
+          "value": ".*(Googlebot|Google-InspectionTool|Storebot-Google|GoogleOther|bingbot|WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Applebot).*"
         }
       ]
     },

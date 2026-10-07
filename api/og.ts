@@ -13,8 +13,13 @@ function escapeHtml(s: string) {
 
 export default async function handler(req: any, res: any) {
   const id = req.query.id as string
-  const host = (req.headers.host as string) || 'manjree.online'
-  const origin = `https://${host}`
+  // Hardcoded, never from req.headers.host: this response carries the canonical
+  // tag, and a host-derived origin points it at whichever hostname the crawler
+  // happened to use (www, a *.vercel.app preview). The sitemap advertises the
+  // bare domain, so a www canonical makes Google file every sitemap URL under
+  // "Alternate page with proper canonical tag" and index nothing. Keep in step
+  // with api/sitemap.ts.
+  const origin = 'https://manjree.online'
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY

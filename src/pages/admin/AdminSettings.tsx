@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { defaultCategories, defaultNewArrivalDays, defaultOrdering, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import { defaultCaptionDefaults, defaultCategories, defaultNewArrivalDays, defaultOrdering, defaultSizes, getSettings, saveSettings } from '../../lib/settings'
+import type { CaptionDefaults } from '../../lib/caption'
 import type { OrderingConfig } from '../../lib/ordering'
 import { signOut } from '../../lib/store'
 
@@ -18,6 +19,8 @@ export default function AdminSettings() {
   const [sizesText, setSizesText] = useState('')
   const [daysText, setDaysText] = useState(String(defaultNewArrivalDays))
   const [ordering, setOrdering] = useState<OrderingConfig>(defaultOrdering)
+  const [caption, setCaption] = useState<CaptionDefaults>(defaultCaptionDefaults)
+  const [hashtagsText, setHashtagsText] = useState('')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +31,8 @@ export default function AdminSettings() {
       setSizesText(s.sizes.join(', '))
       setDaysText(String(s.new_arrival_days))
       setOrdering(s.ordering)
+      setCaption(s.caption)
+      setHashtagsText(s.caption.hashtags.join(' '))
     })
   }, [])
 
@@ -45,10 +50,13 @@ export default function AdminSettings() {
         sizes: parseList(sizesText),
         new_arrival_days: Number(daysText),
         ordering,
+        caption: { ...caption, hashtags: hashtagsText.split(/[\s,]+/) },
       })
       setCategoriesText(clean.categories.join('\n'))
       setSizesText(clean.sizes.join(', '))
       setDaysText(String(clean.new_arrival_days))
+      setCaption(clean.caption)
+      setHashtagsText(clean.caption.hashtags.join(' '))
       setSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -61,6 +69,8 @@ export default function AdminSettings() {
     setCategoriesText(defaultCategories.join('\n'))
     setSizesText(defaultSizes.join(', '))
     setDaysText(String(defaultNewArrivalDays))
+    setCaption(defaultCaptionDefaults)
+    setHashtagsText(defaultCaptionDefaults.hashtags.join(' '))
     setSaved(false)
   }
 
@@ -120,6 +130,66 @@ export default function AdminSettings() {
           />
           <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
             How long a piece stays in New Arrivals after being marked new (1–60 days).
+          </p>
+        </div>
+
+        <div className="border-t border-cream-300 pt-5 dark:border-night-700">
+          <h2 className="font-display text-lg font-semibold text-night-800 dark:text-cream-100">
+            Instagram captions
+          </h2>
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+            Defaults for admin → Instagram caption. Captions themselves are never saved.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">Contact line</label>
+          <input
+            value={caption.contact_line}
+            onChange={(e) => setCaption({ ...caption, contact_line: e.target.value })}
+            className={areaClass}
+          />
+        </div>
+
+        <div>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">
+            Contact line emoji
+          </label>
+          <input
+            value={caption.emoji}
+            onChange={(e) => setCaption({ ...caption, emoji: e.target.value })}
+            placeholder="Leave empty for none"
+            className={areaClass}
+          />
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+            Placed either side of the contact line. You can still change it per caption.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">
+            Made-to-order line
+          </label>
+          <input
+            value={caption.made_to_order_line}
+            onChange={(e) => setCaption({ ...caption, made_to_order_line: e.target.value })}
+            className={areaClass}
+          />
+        </div>
+
+        <div>
+          <label className="block text-base font-medium text-night-800 dark:text-cream-100">
+            Always-add hashtags
+          </label>
+          <textarea
+            value={hashtagsText}
+            onChange={(e) => setHashtagsText(e.target.value)}
+            rows={2}
+            placeholder="#manjreea #ethnicwear"
+            className={areaClass}
+          />
+          <p className="mt-1 text-sm text-night-700/80 dark:text-cream-300/60">
+            Added to every caption alongside the AI’s suggestions. Separate with spaces.
           </p>
         </div>
 

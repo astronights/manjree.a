@@ -251,6 +251,11 @@ export default function AdminProductForm() {
       <h1 className="mt-2 font-display text-2xl font-semibold text-night-800 dark:text-cream-100">
         {id ? 'Edit piece' : 'Add new piece'}
       </h1>
+      {id && (
+        <Link to={`/admin/caption?piece=${id}`} className="mt-1 inline-block text-base font-medium text-leaf-500 hover:underline">
+          📸 Caption for Instagram
+        </Link>
+      )}
 
       <div className="mt-5 space-y-5">
         <div>

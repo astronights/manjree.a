@@ -20,8 +20,13 @@ export const shop = {
 // Categories, sizes and the "New" badge duration are admin-editable
 // settings — see src/lib/settings.ts.
 
+// Short code customers quote in WhatsApp enquiries and Instagram DMs.
+export function productRef(id: string): string {
+  return id.slice(0, 8).toUpperCase()
+}
+
 export function whatsappLink(product: Product, size?: string): string {
-  const ref = product.id.slice(0, 8).toUpperCase()
+  const ref = productRef(product.id)
   const sizeNote = size ? ` — Size: ${size}` : ''
   let opener: string
   if (product.stock_status === 'sold_out') {

@@ -99,6 +99,12 @@ export default function AdminDashboard() {
         >
           ⚙️ Settings
         </Link>
+        <Link
+          to="/admin/caption"
+          className="col-span-2 rounded-xl border border-cream-300 bg-cream-50 py-2.5 text-center text-sm font-medium text-night-800 transition hover:bg-cream-200 dark:border-night-700 dark:bg-night-800 dark:text-cream-100 dark:hover:bg-night-700"
+        >
+          📸 Instagram caption
+        </Link>
       </div>
 
       <input

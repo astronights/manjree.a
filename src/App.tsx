@@ -48,6 +48,7 @@ import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminOrdering from './pages/admin/AdminOrdering'
 import AdminNotify from './pages/admin/AdminNotify'
 import AdminSettings from './pages/admin/AdminSettings'
+import AdminCaption from './pages/admin/AdminCaption'
 import Policies from './pages/Policies'
 
 export default function App() {
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/admin/ordering" element={<AdminOrdering />} />
           <Route path="/admin/notify" element={<AdminNotify />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/caption" element={<AdminCaption />} />
           <Route path="/admin/new" element={<AdminProductForm />} />
           <Route path="/admin/edit/:id" element={<AdminProductForm />} />
         </Route>

@@ -1,10 +1,12 @@
-// Shop settings the admin can edit on /admin/settings: product categories
-// and the size range. Stored as key/jsonb rows in Supabase (localStorage in
+// Shop settings the admin can edit on /admin/settings: product categories,
+// the size range and the Instagram caption defaults. Stored as key/jsonb rows in Supabase (localStorage in
 // demo mode); missing or invalid values fall back to these defaults.
 
 import { supabase } from './supabase'
 import { defaultOrdering, sanitizeOrdering } from './ordering'
 import type { OrderingConfig } from './ordering'
+import { defaultCaptionDefaults, sanitizeCaptionDefaults } from './caption'
+import type { CaptionDefaults } from './caption'
 
 export const defaultCategories = [
   'Kurti',
@@ -28,15 +30,17 @@ export interface ShopSettings {
   sizes: string[]
   new_arrival_days: number
   ordering: OrderingConfig
+  caption: CaptionDefaults
 }
 
-export { defaultOrdering }
+export { defaultOrdering, defaultCaptionDefaults }
 
 type SettingsInput = {
   categories?: unknown
   sizes?: unknown
   new_arrival_days?: unknown
   ordering?: unknown
+  caption?: unknown
 }
 
 const LS_KEY = 'manjrees.settings'
@@ -58,6 +62,7 @@ function withDefaults(raw: SettingsInput): ShopSettings {
     sizes: sanitizeList(raw.sizes, defaultSizes),
     new_arrival_days: sanitizeDays(raw.new_arrival_days),
     ordering: sanitizeOrdering(raw.ordering),
+    caption: sanitizeCaptionDefaults(raw.caption),
   }
 }
 

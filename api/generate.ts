@@ -2,10 +2,17 @@
 // GEMINI_API_KEY stays server-side (set it in Vercel → Settings → Environment
 // Variables; it is NOT a VITE_ variable and never reaches the browser).
 //
+// Gated to the admin the same way as send-push: the caller sends their
+// Supabase session token and it must resolve to the admin account, so the
+// Gemini quota can't be spent by anyone who finds the URL.
+//
 // Deliberately does not import from src/ — the frontend config reads
 // import.meta.env, which doesn't exist in the function runtime.
 
+import { createClient } from '@supabase/supabase-js'
+
 const MODEL = 'gemini-2.5-flash'
+const ADMIN_EMAIL = process.env.VITE_ADMIN_EMAIL || 'admin@manjrees.local'
 // Fallback when the client doesn't send its (admin-editable) category list.
 const DEFAULT_CATEGORIES = [
   'Kurti',
@@ -50,6 +57,21 @@ async function generate(req: any, res: any) {
   if (!key) {
     console.error('generate: GEMINI_API_KEY missing — set it in Vercel env vars and redeploy')
     return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in Vercel' })
+  }
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !anonKey) {
+    console.error('generate: Supabase env vars missing')
+    return res.status(500).json({ error: 'Supabase is not configured on the server' })
+  }
+  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return res.status(401).json({ error: 'Not signed in' })
+  }
+  const authClient = createClient(url, anonKey, { auth: { persistSession: false } })
+  const { data: userData, error: userErr } = await authClient.auth.getUser(token)
+  if (userErr || !userData?.user || userData.user.email !== ADMIN_EMAIL) {
+    return res.status(403).json({ error: 'Not authorised' })
   }
   const { image, title, description, categories: rawCategories } = req.body ?? {}
   if (!image?.data || !image?.mimeType) {

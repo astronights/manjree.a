@@ -6,6 +6,7 @@
 // testing — that variable must never be set in Vercel.
 
 import { defaultCategories } from './settings'
+import { supabase } from './supabase'
 
 export interface Suggestion {
   title: string
@@ -35,7 +36,15 @@ export function buildPrompt(
     .join('\n')
 }
 
-async function toInlineImage(url: string, maxDim = 768): Promise<InlineImage> {
+// The /api functions only answer the signed-in admin (see api/generate.ts).
+async function authHeaders(): Promise<Record<string, string>> {
+  if (!supabase) return {}
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+export async function toInlineImage(url: string, maxDim = 768): Promise<InlineImage> {
   if (url.startsWith('data:')) {
     const comma = url.indexOf(',')
     return { data: url.slice(comma + 1), mimeType: url.slice(5, url.indexOf(';')) }
@@ -65,7 +74,7 @@ export async function suggestDetails(
 
   const res = await fetch('/api/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({ image, categories, ...hints }),
   })
   if (res.ok) return (await res.json()) as Suggestion
@@ -107,4 +116,67 @@ async function callGeminiDirect(
   const json = await res.json()
   if (!res.ok) throw new Error(json.error?.message ?? 'Gemini request failed')
   return JSON.parse(json.candidates[0].content.parts[0].text) as Suggestion
+}
+
+// ------------------------------------------------------- Instagram captions
+
+export interface CaptionSuggestions {
+  captions: string[]
+  hashtags: string[]
+}
+
+export interface CaptionPiece {
+  title?: string
+  description?: string
+  category?: string
+  collection?: string | null
+}
+
+// A still from early in a video (Gemini gets photos only; the share sheet
+// still gets the real video).
+export async function videoFrame(url: string, maxDim = 768): Promise<InlineImage> {
+  const video = document.createElement('video')
+  video.crossOrigin = 'anonymous'
+  video.muted = true
+  video.playsInline = true
+  video.preload = 'auto'
+  await new Promise((resolve, reject) => {
+    video.onloadeddata = resolve
+    video.onerror = () => reject(new Error('Could not load the video for the AI request'))
+    video.src = url
+  })
+  await new Promise((resolve) => {
+    video.onseeked = resolve
+    video.currentTime = Math.min(0.5, (video.duration || 1) / 2)
+  })
+  const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(video.videoWidth * scale)
+  canvas.height = Math.round(video.videoHeight * scale)
+  canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height)
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+  return { data: dataUrl.slice(dataUrl.indexOf(',') + 1), mimeType: 'image/jpeg' }
+}
+
+// Photos are downscaled in the browser and sent inline — nothing is uploaded
+// to storage. `media` are http(s), blob: or data: URLs.
+export async function suggestCaptions(
+  media: { url: string; video: boolean }[],
+  notes: string,
+  piece?: CaptionPiece,
+): Promise<CaptionSuggestions> {
+  const images = await Promise.all(
+    media.slice(0, 4).map((m) => (m.video ? videoFrame(m.url) : toInlineImage(m.url))),
+  )
+  const res = await fetch('/api/caption', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: JSON.stringify({ images, notes, piece }),
+  })
+  const json = (await res.json().catch(() => ({}))) as Partial<CaptionSuggestions> & { error?: string }
+  if (!res.ok) {
+    if (res.status === 404) throw new Error('Captions need the deployed site (no /api runtime in local dev).')
+    throw new Error(json.error ?? `Caption request failed (HTTP ${res.status})`)
+  }
+  return { captions: json.captions ?? [], hashtags: json.hashtags ?? [] }
 }

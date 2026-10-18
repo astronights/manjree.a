@@ -1,7 +1,12 @@
-// Vercel serverless function: serves OG-tag HTML for /product/:id when the
-// request comes from a social media crawler (WhatsApp, Facebook, Twitter, …).
-// vercel.json routes crawlers here; real browser visits bypass this entirely
-// and go straight to index.html via the catch-all rewrite.
+// Vercel serverless function: serves crawler-facing HTML for /product/:id and
+// for the catalog at /. vercel.json routes crawlers here; real browser visits
+// bypass this entirely and go straight to index.html via the catch-all rewrite.
+//
+// The catalog branch exists for indexing, not for previews. In the HTML a
+// crawler gets on its first pass, index.html is an empty <div id="root">, so
+// every product page looks like an orphan reachable only from the sitemap —
+// the classic "Discovered - currently not indexed" shape. Rendering the
+// product links server-side makes them properly linked pages instead.
 
 function escapeHtml(s: string) {
   return s
@@ -12,7 +17,7 @@ function escapeHtml(s: string) {
 }
 
 export default async function handler(req: any, res: any) {
-  const id = req.query.id as string
+  const id = (req.query.id as string | undefined) || ''
   // Hardcoded, never from req.headers.host: this response carries the canonical
   // tag, and a host-derived origin points it at whichever hostname the crawler
   // happened to use (www, a *.vercel.app preview). The sitemap advertises the
@@ -24,17 +29,20 @@ export default async function handler(req: any, res: any) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
-  let title = "Manjree's — Ethnic Wear"
-  let description = 'Embrace elegance in ethnic wear. Browse kurtis, suit sets and more.'
+  const SITE_TITLE = "Manjree's — Ethnic Wear"
+  const SITE_DESC = 'Embrace elegance in ethnic wear. Browse kurtis, suit sets and more.'
+
+  let title = SITE_TITLE
+  let description = SITE_DESC
   let image = `${origin}/icon-512.png`
   let jsonLd = ''
   // Crawlers index on body content, so this response mirrors what a visitor
   // sees in the React page. An empty body reads as a thin page and risks
   // "Crawled - currently not indexed".
-  let body = `<h1>Manjree's — Ethnic Wear</h1>
-<p>${escapeHtml(description)}</p>
+  let body = `<h1>${escapeHtml(SITE_TITLE)}</h1>
+<p>${escapeHtml(SITE_DESC)}</p>
 <p><a href="/">Browse the catalog</a></p>`
-  const productUrl = `${origin}/product/${id}`
+  const pageUrl = id ? `${origin}/product/${id}` : `${origin}/`
 
   try {
     if (supabaseUrl && anonKey && id) {
@@ -68,7 +76,7 @@ export default async function handler(req: any, res: any) {
           size: product.sizes,
           offers: {
             '@type': 'Offer',
-            url: productUrl,
+            url: pageUrl,
             availability: stockMap[product.stock_status] ?? 'https://schema.org/InStock',
             ...(product.show_price
               ? { priceCurrency: 'INR', price: String(product.sale_price ?? product.price) }
@@ -111,6 +119,54 @@ ${photos
 <a href="/policies">Shipping &amp; returns</a>
 </nav>`
       }
+    } else if (supabaseUrl && anonKey) {
+      // Catalog. Newest first so recent pieces sit where link weight is highest.
+      // limit is explicit rather than relying on the PostgREST default; well
+      // past the current catalog, and the point at which this needs paginating.
+      const apiRes = await fetch(
+        `${supabaseUrl}/rest/v1/products?is_draft=eq.false&select=id,title,category,price,sale_price,show_price&order=created_at.desc.nullslast&limit=1000`,
+        { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } },
+      )
+      const rows = await apiRes.json()
+      if (Array.isArray(rows) && rows.length) {
+        // Mirrors the ClothingStore block in index.html, which a crawler
+        // routed here never sees.
+        jsonLd = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ClothingStore',
+          name: "Manjree's",
+          url: origin,
+          description: SITE_DESC,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'Chennai',
+            addressCountry: 'IN',
+          },
+          areaServed: 'Worldwide',
+        })
+
+        const items = rows
+          .map((p: any) => {
+            const price = p.show_price
+              ? `₹${p.sale_price ?? p.price}`
+              : 'Price on request'
+            const meta = [p.category, price].filter(Boolean).map(String).map(escapeHtml)
+            return `<li><a href="/product/${encodeURIComponent(p.id)}">${escapeHtml(
+              String(p.title),
+            )}</a> — ${meta.join(' · ')}</li>`
+          })
+          .join('\n')
+
+        body = `<h1>${escapeHtml(SITE_TITLE)}</h1>
+<p>${escapeHtml(SITE_DESC)}</p>
+<h2>All pieces (${rows.length})</h2>
+<ul>
+${items}
+</ul>
+<nav>
+<a href="/policies">Shipping &amp; returns</a>
+</nav>`
+      }
     }
   } catch {
     // Fall through to generic defaults — a crawler must always get a valid response
@@ -122,13 +178,13 @@ ${photos
 <meta charset="utf-8">
 <title>${escapeHtml(title)}</title>
 <meta property="og:type" content="website">
-<meta property="og:url" content="${escapeHtml(productUrl)}">
+<meta property="og:url" content="${escapeHtml(pageUrl)}">
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:image" content="${escapeHtml(image)}">
 <meta property="og:site_name" content="Manjree's">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="${escapeHtml(productUrl)}">
+<link rel="canonical" href="${escapeHtml(pageUrl)}">
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body>${body}</body>

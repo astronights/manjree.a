@@ -2,6 +2,17 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     {
+      "source": "/",
+      "destination": "/api/og",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(Googlebot|Google-InspectionTool|Storebot-Google|GoogleOther|bingbot|WhatsApp|facebookexternalhit|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Applebot).*"
+        }
+      ]
+    },
+    {
       "source": "/product/:id",
       "destination": "/api/og?id=:id",
       "has": [
